@@ -66,39 +66,33 @@
                 console.error('Ошибка загрузки панорамы:', error);
             });
 
-            // Состояние мыши
             let isMouseDown = false;
             let previousMousePosition = { x: 0, y: 0 };
 
-            // Нажатие левой кнопки мыши
             document.addEventListener('mousedown', (e) => {
-                if (e.button === 0) { // 0 = левая кнопка
+                if (e.button === 0) {
                     isMouseDown = true;
                     previousMousePosition = { x: e.clientX, y: e.clientY };
                     document.body.classList.add('dragging');
                 }
             });
 
-            // Отпускание кнопки мыши
             document.addEventListener('mouseup', (e) => {
                 isMouseDown = false;
                 document.body.classList.remove('dragging');
             });
 
-            // Движение мыши при нажатой кнопке
             document.addEventListener('mousemove', (e) => {
                 if (isMouseDown) {
                     const deltaX = e.clientX - previousMousePosition.x;
                     const deltaY = e.clientY - previousMousePosition.y;
                     
-                    // Чувствительность вращения
                     const sensitivity = 0.01;
                     
                     camera.rotation.order = 'YXZ';
-                    camera.rotation.y -= deltaX * sensitivity;
-                    camera.rotation.x -= deltaY * sensitivity;
+                    camera.rotation.y += deltaX * sensitivity;
+                    camera.rotation.x += deltaY * sensitivity;
                     
-                    // Ограничиваем вращение по X (чтобы не переворачиваться)
                     const maxAngle = Math.PI / 2;
                     camera.rotation.x = Math.max(-maxAngle, Math.min(maxAngle, camera.rotation.x));
                     
@@ -106,7 +100,6 @@
                 }
             });
 
-            // Предотвращаем выделение текста при драге
             document.addEventListener('selectstart', (e) => {
                 if (isMouseDown) {
                     e.preventDefault();
