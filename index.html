@@ -18,6 +18,7 @@
             overflow: hidden;
             background: #000;
             cursor: grab;
+            touch-action: none;
         }
         body.dragging {
             cursor: grabbing;
@@ -66,31 +67,31 @@
                 console.error('Ошибка загрузки панорамы:', error);
             });
 
-            let isMouseDown = false;
-            let previousMousePosition = { x: 0, y: 0 };
+            let isDown = false;
+            let previousPosition = { x: 0, y: 0 };
             
             let velocity = { x: 0, y: 0 };
             const friction = 0.95;
-            const sensitivity = 0.001;
+            const sensitivity = 0.005;
 
             document.addEventListener('mousedown', (e) => {
                 if (e.button === 0) {
-                    isMouseDown = true;
+                    isDown = true;
                     velocity = { x: 0, y: 0 };
-                    previousMousePosition = { x: e.clientX, y: e.clientY };
+                    previousPosition = { x: e.clientX, y: e.clientY };
                     document.body.classList.add('dragging');
                 }
             });
 
             document.addEventListener('mouseup', (e) => {
-                isMouseDown = false;
+                isDown = false;
                 document.body.classList.remove('dragging');
             });
 
             document.addEventListener('mousemove', (e) => {
-                if (isMouseDown) {
-                    const deltaX = e.clientX - previousMousePosition.x;
-                    const deltaY = e.clientY - previousMousePosition.y;
+                if (isDown) {
+                    const deltaX = e.clientX - previousPosition.x;
+                    const deltaY = e.clientY - previousPosition.y;
                     
                     camera.rotation.order = 'YXZ';
                     camera.rotation.y += deltaX * sensitivity;
@@ -102,12 +103,49 @@
                     velocity.x = deltaX * sensitivity;
                     velocity.y = deltaY * sensitivity;
                     
-                    previousMousePosition = { x: e.clientX, y: e.clientY };
+                    previousPosition = { x: e.clientX, y: e.clientY };
+                }
+            });
+
+            document.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1) {
+                    isDown = true;
+                    velocity = { x: 0, y: 0 };
+                    const touch = e.touches[0];
+                    previousPosition = { x: touch.clientX, y: touch.clientY };
+                    document.body.classList.add('dragging');
+                }
+            });
+
+            document.addEventListener('touchend', (e) => {
+                isDown = false;
+                document.body.classList.remove('dragging');
+            });
+
+            document.addEventListener('touchmove', (e) => {
+                if (isDown && e.touches.length === 1) {
+                    const touch = e.touches[0];
+                    const deltaX = touch.clientX - previousPosition.x;
+                    const deltaY = touch.clientY - previousPosition.y;
+                    
+                    camera.rotation.order = 'YXZ';
+                    camera.rotation.y += deltaX * sensitivity;
+                    camera.rotation.x += deltaY * sensitivity;
+                    
+                    const maxAngle = Math.PI / 2;
+                    camera.rotation.x = Math.max(-maxAngle, Math.min(maxAngle, camera.rotation.x));
+                    
+                    velocity.x = deltaX * sensitivity;
+                    velocity.y = deltaY * sensitivity;
+                    
+                    previousPosition = { x: touch.clientX, y: touch.clientY };
+                    
+                    e.preventDefault();
                 }
             });
 
             document.addEventListener('selectstart', (e) => {
-                if (isMouseDown) {
+                if (isDown) {
                     e.preventDefault();
                 }
             });
@@ -115,7 +153,7 @@
             function animate() {
                 requestAnimationFrame(animate);
                 
-                if (!isMouseDown && (Math.abs(velocity.x) > 0.0001 || Math.abs(velocity.y) > 0.0001)) {
+                if (!isDown && (Math.abs(velocity.x) > 0.0001 || Math.abs(velocity.y) > 0.0001)) {
                     camera.rotation.order = 'YXZ';
                     camera.rotation.y += velocity.x;
                     camera.rotation.x += velocity.y;
