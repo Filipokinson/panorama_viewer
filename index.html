@@ -10,62 +10,131 @@
             padding: 0;
             box-sizing: border-box;
         }
-        body {
+        html, body {
             width: 100%;
-            height: 100vh;
+            height: 100%;
+        }
+        body {
             overflow: hidden;
             background: #000;
+            cursor: grab;
+        }
+        body.dragging {
+            cursor: grabbing;
         }
     </style>
 </head>
 <body>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script async src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
     <script>
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(
-            75,
-            window.innerWidth / window.innerHeight,
-            0.1,
-            10000
-        );
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(window.devicePixelRatio);
-        document.body.appendChild(renderer.domElement);
-
-        const textureLoader = new THREE.TextureLoader();
-        textureLoader.load('pup.jpg', function(texture) {
-            const geometry = new THREE.SphereGeometry(500, 64, 32);
-            geometry.scale(-1, 1, 1);
+        function startPanorama() {
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(
+                75,
+                window.innerWidth / window.innerHeight,
+                0.1,
+                10000
+            );
             
-            const material = new THREE.MeshBasicMaterial({ map: texture });
-            const mesh = new THREE.Mesh(geometry, material);
-            scene.add(mesh);
-        });
-
-        let mouse = { x: 0, y: 0 };
-        document.addEventListener('mousemove', (e) => {
-            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-        });
-
-        function animate() {
-            requestAnimationFrame(animate);
+            const renderer = new THREE.WebGLRenderer({ 
+                antialias: true, 
+                alpha: true,
+                precision: 'highp'
+            });
             
-            camera.rotation.order = 'YXZ';
-            camera.rotation.y += (mouse.x * Math.PI - camera.rotation.y) * 0.05;
-            camera.rotation.x += (mouse.y * (Math.PI / 2) - camera.rotation.x) * 0.05;
-            
-            renderer.render(scene, camera);
-        }
-        animate();
-
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
-        });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            document.body.appendChild(renderer.domElement);
+
+            const textureLoader = new THREE.TextureLoader();
+            
+            textureLoader.load('./pup.jpg', function(texture) {
+                const geometry = new THREE.SphereGeometry(500, 64, 32);
+                geometry.scale(-1, 1, 1);
+                
+                const material = new THREE.MeshBasicMaterial({ map: texture });
+                const mesh = new THREE.Mesh(geometry, material);
+                scene.add(mesh);
+                
+                console.log('Панорама загружена успешно');
+            }, 
+            function(progressEvent) {
+                console.log('Загрузка: ' + (progressEvent.loaded / progressEvent.total * 100) + '%');
+            },
+            function(error) {
+                console.error('Ошибка загрузки панорамы:', error);
+            });
+
+            // Состояние мыши
+            let isMouseDown = false;
+            let previousMousePosition = { x: 0, y: 0 };
+
+            // Нажатие левой кнопки мыши
+            document.addEventListener('mousedown', (e) => {
+                if (e.button === 0) { // 0 = левая кнопка
+                    isMouseDown = true;
+                    previousMousePosition = { x: e.clientX, y: e.clientY };
+                    document.body.classList.add('dragging');
+                }
+            });
+
+            // Отпускание кнопки мыши
+            document.addEventListener('mouseup', (e) => {
+                isMouseDown = false;
+                document.body.classList.remove('dragging');
+            });
+
+            // Движение мыши при нажатой кнопке
+            document.addEventListener('mousemove', (e) => {
+                if (isMouseDown) {
+                    const deltaX = e.clientX - previousMousePosition.x;
+                    const deltaY = e.clientY - previousMousePosition.y;
+                    
+                    // Чувствительность вращения
+                    const sensitivity = 0.01;
+                    
+                    camera.rotation.order = 'YXZ';
+                    camera.rotation.y -= deltaX * sensitivity;
+                    camera.rotation.x -= deltaY * sensitivity;
+                    
+                    // Ограничиваем вращение по X (чтобы не переворачиваться)
+                    const maxAngle = Math.PI / 2;
+                    camera.rotation.x = Math.max(-maxAngle, Math.min(maxAngle, camera.rotation.x));
+                    
+                    previousMousePosition = { x: e.clientX, y: e.clientY };
+                }
+            });
+
+            // Предотвращаем выделение текста при драге
+            document.addEventListener('selectstart', (e) => {
+                if (isMouseDown) {
+                    e.preventDefault();
+                }
+            });
+
+            function animate() {
+                requestAnimationFrame(animate);
+                renderer.render(scene, camera);
+            }
+            animate();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+
+        function checkTHREE() {
+            if (typeof THREE !== 'undefined') {
+                startPanorama();
+            } else {
+                setTimeout(checkTHREE, 100);
+            }
+        }
+        
+        checkTHREE();
     </script>
 </body>
 </html>
