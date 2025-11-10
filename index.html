@@ -5,31 +5,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Просмотр панорам</title>
     <style>
-        body {
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            width: 100%;
+            height: 100vh;
             overflow: hidden;
         }
-        canvas {
+        #canvas {
             display: block;
-            width: 100%;
-            height: 100%;
         }
     </style>
 </head>
 <body>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    
     <script src="https://cdn.jsdelivr.net/npm/panolens@0.12.8/build/panolens.min.js"></script>
 
     <script>
-        const panorama = new PANOLENS.ImagePanorama('pup.jpg');
-        
-        const viewer = new PANOLENS.Viewer({
-            container: document.body
+        window.addEventListener('load', function() {
+            const panorama = new PANOLENS.ImagePanorama('pup.jpg');
+            
+            const viewer = new PANOLENS.Viewer({
+                container: document.body,
+                width: window.innerWidth,
+                height: window.innerHeight,
+                autoRotate: true,
+                autoRotateSpeed: 2
+            });
+            
+            viewer.add(panorama);
+
+            window.addEventListener('resize', () => {
+                viewer.container.style.width = window.innerWidth + 'px';
+                viewer.container.style.height = window.innerHeight + 'px';
+            });
         });
-        
-        viewer.add(panorama);
     </script>
 </body>
 </html>
