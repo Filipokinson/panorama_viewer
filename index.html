@@ -72,7 +72,11 @@
             
             let velocity = { x: 0, y: 0 };
             const friction = 0.95;
-            const sensitivity = 0.002;
+            const sensitivity = 0.003;
+            
+            const minFOV = 20;
+            const maxFOV = 100;
+            const zoomSensitivity = 3;
 
             document.addEventListener('mousedown', (e) => {
                 if (e.button === 0) {
@@ -107,6 +111,18 @@
                 }
             });
 
+            document.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                
+                const zoomDelta = e.deltaY > 0 ? zoomSensitivity : -zoomSensitivity;
+                camera.fov += zoomDelta;
+                
+                camera.fov = Math.max(minFOV, Math.min(maxFOV, camera.fov));
+                camera.updateProjectionMatrix();
+            }, { passive: false });
+
+            let lastTouchDistance = 0;
+
             document.addEventListener('touchstart', (e) => {
                 if (e.touches.length === 1) {
                     isDown = true;
@@ -114,16 +130,21 @@
                     const touch = e.touches[0];
                     previousPosition = { x: touch.clientX, y: touch.clientY };
                     document.body.classList.add('dragging');
+                    lastTouchDistance = 0;
+                } else if (e.touches.length === 2) {
+                    isDown = false;
+                    lastTouchDistance = getTouchDistance(e.touches[0], e.touches[1]);
                 }
             });
 
             document.addEventListener('touchend', (e) => {
                 isDown = false;
                 document.body.classList.remove('dragging');
+                lastTouchDistance = 0;
             });
 
             document.addEventListener('touchmove', (e) => {
-                if (isDown && e.touches.length === 1) {
+                if (e.touches.length === 1 && isDown) {
                     const touch = e.touches[0];
                     const deltaX = touch.clientX - previousPosition.x;
                     const deltaY = touch.clientY - previousPosition.y;
@@ -141,8 +162,28 @@
                     previousPosition = { x: touch.clientX, y: touch.clientY };
                     
                     e.preventDefault();
+                } else if (e.touches.length === 2) {
+                    const currentDistance = getTouchDistance(e.touches[0], e.touches[1]);
+                    
+                    if (lastTouchDistance > 0) {
+                        const deltaPinch = currentDistance - lastTouchDistance;
+                        const zoomDelta = deltaPinch > 0 ? -zoomSensitivity : zoomSensitivity;
+                        
+                        camera.fov += zoomDelta;
+                        camera.fov = Math.max(minFOV, Math.min(maxFOV, camera.fov));
+                        camera.updateProjectionMatrix();
+                    }
+                    
+                    lastTouchDistance = currentDistance;
+                    e.preventDefault();
                 }
-            });
+            }, { passive: false });
+
+            function getTouchDistance(touch1, touch2) {
+                const dx = touch1.clientX - touch2.clientX;
+                const dy = touch1.clientY - touch2.clientY;
+                return Math.sqrt(dx * dx + dy * dy);
+            }
 
             document.addEventListener('selectstart', (e) => {
                 if (isDown) {
