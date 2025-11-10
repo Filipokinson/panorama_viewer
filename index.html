@@ -31,13 +31,13 @@
             top: 0;
             width: 300px;
             height: 100vh;
-            background: rgba(37, 37, 37, 0.95);
+            background: rgba(20, 20, 40, 0.95);
             backdrop-filter: blur(10px);
             z-index: 1000;
             transform: translateX(-100%);
             transition: transform 0.3s ease;
             overflow-y: auto;
-            box-shadow: 2px 0 10px rgba(108, 108, 108, 0.5);
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
         }
 
         #sidebar.open {
@@ -78,8 +78,8 @@
         }
 
         .panorama-item {
-            background: rgba(0, 0, 0, 0.2);
-            border: 2px solid rgba(0, 0, 0, 0.5);
+            background: rgba(102, 126, 234, 0.2);
+            border: 2px solid rgba(102, 126, 234, 0.5);
             border-radius: 8px;
             padding: 0;
             cursor: pointer;
@@ -91,15 +91,15 @@
         }
 
         .panorama-item:hover {
-            border-color: rgb(0, 0, 0);
+            border-color: rgba(102, 126, 234, 1);
             transform: translateX(5px);
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
         }
 
         .panorama-item.active {
-            background: rgba(0, 0, 0, 0.8);
-            border-color: rgb(0, 0, 0);
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            background: rgba(102, 126, 234, 0.8);
+            border-color: rgba(118, 75, 162, 1);
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
         }
 
         .panorama-thumbnail {
@@ -107,7 +107,7 @@
             height: 100px;
             object-fit: cover;
             display: block;
-            background: #000000;
+            background: #1a1a2e;
         }
 
         .panorama-info {
@@ -132,7 +132,7 @@
             position: fixed;
             top: 20px;
             left: 20px;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(102, 126, 234, 0.8);
             color: white;
             border: none;
             width: 50px;
@@ -145,11 +145,11 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
         }
 
         #menu-button:hover {
-            background: rgb(0, 0, 0);
+            background: rgba(102, 126, 234, 1);
             transform: scale(1.1);
         }
 
@@ -169,7 +169,7 @@
             font-size: 0.85em;
             z-index: 100;
             max-width: 250px;
-            border: 1px solid rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(102, 126, 234, 0.3);
         }
 
         #info p {
