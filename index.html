@@ -14,34 +14,57 @@
             width: 100%;
             height: 100vh;
             overflow: hidden;
-        }
-        #canvas {
-            display: block;
+            background: #000;
         }
     </style>
 </head>
 <body>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/panolens@0.12.8/build/panolens.min.js"></script>
-
     <script>
-        window.addEventListener('load', function() {
-            const panorama = new PANOLENS.ImagePanorama('pup.jpg');
-            
-            const viewer = new PANOLENS.Viewer({
-                container: document.body,
-                width: window.innerWidth,
-                height: window.innerHeight,
-                autoRotate: true,
-                autoRotateSpeed: 2
-            });
-            
-            viewer.add(panorama);
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(
+            75,
+            window.innerWidth / window.innerHeight,
+            0.1,
+            10000
+        );
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.body.appendChild(renderer.domElement);
 
-            window.addEventListener('resize', () => {
-                viewer.container.style.width = window.innerWidth + 'px';
-                viewer.container.style.height = window.innerHeight + 'px';
-            });
+        const textureLoader = new THREE.TextureLoader();
+        textureLoader.load('pup.jpg', function(texture) {
+            const geometry = new THREE.SphereGeometry(500, 64, 32);
+            geometry.scale(-1, 1, 1);
+            
+            const material = new THREE.MeshBasicMaterial({ map: texture });
+            const mesh = new THREE.Mesh(geometry, material);
+            scene.add(mesh);
+        });
+
+        let mouse = { x: 0, y: 0 };
+        document.addEventListener('mousemove', (e) => {
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            camera.rotation.order = 'YXZ';
+            camera.rotation.y += (mouse.x * Math.PI - camera.rotation.y) * 0.05;
+            camera.rotation.x += (mouse.y * (Math.PI / 2) - camera.rotation.x) * 0.05;
+            
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
         });
     </script>
 </body>
