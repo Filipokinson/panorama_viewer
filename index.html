@@ -3,229 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Просмотр панорам</title>
+    <title>Галерея панорам</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        html, body {
-            width: 100%;
-            height: 100%;
-        }
         body {
-            overflow: hidden;
-            background: #000;
-            cursor: grab;
-            touch-action: none;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
         }
-        body.dragging {
-            cursor: grabbing;
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 50px;
+            font-size: 2.5em;
+        }
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        .card {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+        }
+        .card-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: #ddd;
+        }
+        .card-content {
+            padding: 20px;
+            text-align: center;
+        }
+        .card-title {
+            font-size: 1.3em;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .card-link {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 10px 25px;
+            border-radius: 5px;
+            text-decoration: none;
+            transition: background 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        .card-link:hover {
+            background: #764ba2;
         }
     </style>
 </head>
 <body>
-    <script async src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    
-    <script>
-        function startPanorama() {
-            const scene = new THREE.Scene();
-            const camera = new THREE.PerspectiveCamera(
-                75,
-                window.innerWidth / window.innerHeight,
-                0.1,
-                10000
-            );
-            
-            const renderer = new THREE.WebGLRenderer({ 
-                antialias: true, 
-                alpha: true,
-                precision: 'highp'
-            });
-            
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(window.devicePixelRatio);
-            document.body.appendChild(renderer.domElement);
-
-            const textureLoader = new THREE.TextureLoader();
-            
-            textureLoader.load('./pup.jpg', function(texture) {
-                const geometry = new THREE.SphereGeometry(500, 64, 32);
-                geometry.scale(-1, 1, 1);
-                
-                const material = new THREE.MeshBasicMaterial({ map: texture });
-                const mesh = new THREE.Mesh(geometry, material);
-                scene.add(mesh);
-                
-                console.log('Панорама загружена успешно');
-            }, 
-            function(progressEvent) {
-                console.log('Загрузка: ' + (progressEvent.loaded / progressEvent.total * 100) + '%');
-            },
-            function(error) {
-                console.error('Ошибка загрузки панорамы:', error);
-            });
-
-            let isDown = false;
-            let previousPosition = { x: 0, y: 0 };
-            
-            let velocity = { x: 0, y: 0 };
-            const friction = 0.95;
-            const sensitivity = 0.003;
-            
-            const minFOV = 20;
-            const maxFOV = 100;
-            const zoomSensitivity = 3;
-
-            document.addEventListener('mousedown', (e) => {
-                if (e.button === 0) {
-                    isDown = true;
-                    velocity = { x: 0, y: 0 };
-                    previousPosition = { x: e.clientX, y: e.clientY };
-                    document.body.classList.add('dragging');
-                }
-            });
-
-            document.addEventListener('mouseup', (e) => {
-                isDown = false;
-                document.body.classList.remove('dragging');
-            });
-
-            document.addEventListener('mousemove', (e) => {
-                if (isDown) {
-                    const deltaX = e.clientX - previousPosition.x;
-                    const deltaY = e.clientY - previousPosition.y;
-                    
-                    camera.rotation.order = 'YXZ';
-                    camera.rotation.y += deltaX * sensitivity;
-                    camera.rotation.x += deltaY * sensitivity;
-                    
-                    const maxAngle = Math.PI / 2;
-                    camera.rotation.x = Math.max(-maxAngle, Math.min(maxAngle, camera.rotation.x));
-                    
-                    velocity.x = deltaX * sensitivity;
-                    velocity.y = deltaY * sensitivity;
-                    
-                    previousPosition = { x: e.clientX, y: e.clientY };
-                }
-            });
-
-            document.addEventListener('wheel', (e) => {
-                e.preventDefault();
-                
-                const zoomDelta = e.deltaY > 0 ? zoomSensitivity : -zoomSensitivity;
-                camera.fov += zoomDelta;
-                
-                camera.fov = Math.max(minFOV, Math.min(maxFOV, camera.fov));
-                camera.updateProjectionMatrix();
-            }, { passive: false });
-
-            let lastTouchDistance = 0;
-
-            document.addEventListener('touchstart', (e) => {
-                if (e.touches.length === 1) {
-                    isDown = true;
-                    velocity = { x: 0, y: 0 };
-                    const touch = e.touches[0];
-                    previousPosition = { x: touch.clientX, y: touch.clientY };
-                    document.body.classList.add('dragging');
-                    lastTouchDistance = 0;
-                } else if (e.touches.length === 2) {
-                    isDown = false;
-                    lastTouchDistance = getTouchDistance(e.touches[0], e.touches[1]);
-                }
-            });
-
-            document.addEventListener('touchend', (e) => {
-                isDown = false;
-                document.body.classList.remove('dragging');
-                lastTouchDistance = 0;
-            });
-
-            document.addEventListener('touchmove', (e) => {
-                if (e.touches.length === 1 && isDown) {
-                    const touch = e.touches[0];
-                    const deltaX = touch.clientX - previousPosition.x;
-                    const deltaY = touch.clientY - previousPosition.y;
-                    
-                    camera.rotation.order = 'YXZ';
-                    camera.rotation.y += deltaX * sensitivity;
-                    camera.rotation.x += deltaY * sensitivity;
-                    
-                    const maxAngle = Math.PI / 2;
-                    camera.rotation.x = Math.max(-maxAngle, Math.min(maxAngle, camera.rotation.x));
-                    
-                    velocity.x = deltaX * sensitivity;
-                    velocity.y = deltaY * sensitivity;
-                    
-                    previousPosition = { x: touch.clientX, y: touch.clientY };
-                    
-                    e.preventDefault();
-                } else if (e.touches.length === 2) {
-                    const currentDistance = getTouchDistance(e.touches[0], e.touches[1]);
-                    
-                    if (lastTouchDistance > 0) {
-                        const deltaPinch = currentDistance - lastTouchDistance;
-                        const zoomDelta = deltaPinch > 0 ? -zoomSensitivity : zoomSensitivity;
-                        
-                        camera.fov += zoomDelta;
-                        camera.fov = Math.max(minFOV, Math.min(maxFOV, camera.fov));
-                        camera.updateProjectionMatrix();
-                    }
-                    
-                    lastTouchDistance = currentDistance;
-                    e.preventDefault();
-                }
-            }, { passive: false });
-
-            function getTouchDistance(touch1, touch2) {
-                const dx = touch1.clientX - touch2.clientX;
-                const dy = touch1.clientY - touch2.clientY;
-                return Math.sqrt(dx * dx + dy * dy);
-            }
-
-            document.addEventListener('selectstart', (e) => {
-                if (isDown) {
-                    e.preventDefault();
-                }
-            });
-
-            function animate() {
-                requestAnimationFrame(animate);
-                
-                if (!isDown && (Math.abs(velocity.x) > 0.0001 || Math.abs(velocity.y) > 0.0001)) {
-                    camera.rotation.order = 'YXZ';
-                    camera.rotation.y += velocity.x;
-                    camera.rotation.x += velocity.y;
-                    
-                    const maxAngle = Math.PI / 2;
-                    camera.rotation.x = Math.max(-maxAngle, Math.min(maxAngle, camera.rotation.x));
-                    
-                    velocity.x *= friction;
-                    velocity.y *= friction;
-                }
-                
-                renderer.render(scene, camera);
-            }
-            animate();
-
-            window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-            });
-        }
-
-        function checkTHREE() {
-            if (typeof THREE !== 'undefined') {
-                startPanorama();
-            } else {
-                setTimeout(checkTHREE, 100);
-            }
-        }
+    <div class="container">
+        <h1>Галерея панорам</h1>
         
-        checkTHREE();
-    </script>
+        <div class="gallery">
+            <div class="card">
+                <img src="images/pup.jpg" alt="Кабинет имени Ибн-Баттуты" class="card-image">
+                <div class="card-content">
+                    <h2 class="card-title">Ибн-баттута</h2>
+                    <p>Ибн-Баттута</p>
+                    <a href="panorama.html?img=pup.jpg" class="card-link">Открыть</a>
+                </div>
+            </div>
+
+            <div class="card">
+                <img src="images/nature.jpg" alt="Улица" class="card-image">
+                <div class="card-content">
+                    <h2 class="card-title">Улица</h2>
+                    <p>Пейзаж</p>
+                    <a href="panorama.html?img=street.jpg" class="card-link">Открыть</a>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

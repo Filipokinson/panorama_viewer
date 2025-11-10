@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Просмотр панорамы</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html, body {
+            width: 100%;
+            height: 100%;
+        }
+        body {
+            overflow: hidden;
+            background: #000;
+            cursor: grab;
+            touch-action: none;
+            font-family: Arial, sans-serif;
+        }
+        body.dragging {
+            cursor: grabbing;
+        }
+        
+        #back-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            z-index: 100;
+            transition: background 0.3s ease;
+        }
+        
+        #back-button:hover {
+            background: rgba(0, 0, 0, 0.9);
+        }
+        
+        #info {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            z-index: 100;
+            max-width: 250px;
+        }
+    </style>
+</head>
+<body>
+    <button id="back-button">← Назад в меню</button>
+    <div id="info">
+        <p>ПК: Левая кнопка мыши для вращения, колесо для зума</p>
+        <p>Телефон: Палец для вращения, два пальца для зума</p>
+    </div>
+
+    <script async src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const imageName = urlParams.get('img') || 'pup.jpg';
+        const imageUrl = './images/' + imageName;
+
+        document.getElementById('back-button').addEventListener('click', () => {
+            window.location.href = 'index.html';
+        });
+
+        function startPanorama() {
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(
+                75,
+                window.innerWidth / window.innerHeight,
+                0.1,
+                10000
+            );
+            
+            const renderer = new THREE.WebGLRenderer({ 
+                antialias: true, 
+                alpha: true,
+                precision: 'highp'
+            });
+            
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            document.body.appendChild(renderer.domElement);
+
+            const textureLoader = new THREE.TextureLoader();
+            
+            textureLoader.load(imageUrl, function(texture) {
+                const geometry = new THREE.SphereGeometry(500, 64, 32);
+                geometry.scale(-1, 1, 1);
+                
+                const material = new THREE.MeshBasicMaterial({ map: texture });
+                const mesh = new THREE.Mesh(geometry, material);
+                scene.add(mesh);
+                
+                console.log('Панорама загружена: ' + imageName);
+            }, 
+            function(progressEvent) {
+                console.log('Загрузка: ' + (progressEvent.loaded / progressEvent.total * 100) + '%');
+            },
+            function(error) {
+                console.error('Ошибка загрузки:', error);
+            });
+
+            let isDown = false;
+            let previousPosition = { x: 0, y: 0 };
+            let velocity = { x: 0, y: 0 };
+            const friction = 0.95;
+            const sensitivity = 0.01;
+            const minFOV = 20;
+            const maxFOV = 100;
+            const zoomSensitivity = 3;
+
+            document.addEventListener('mousedown', (e) => {
+                if (e.button === 0) {
+                    isDown = true;
+                    velocity = { x: 0, y: 0 };
+                    previousPosition = { x: e.clientX, y: e.clientY };
+                    document.body.classList.add('dragging');
+                }
+            });
+
+            document.addEventListener('mouseup', (e) => {
+                isDown = false;
+                document.body.classList.remove('dragging');
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (isDown) {
+                    const deltaX = e.clientX - previousPosition.x;
+                    const deltaY = e.clientY - previousPosition.y;
+                    
+                    camera.rotation.order = 'YXZ';
+                    camera.rotation.y += deltaX * sensitivity;
+                    camera.rotation.x += deltaY * sensitivity;
+                    
+                    const maxAngle = Math.PI / 2;
+                    camera.rotation.x = Math.max(-maxAngle, Math.min(maxAngle, camera.rotation.x));
+                    
+                    velocity.x = deltaX * sensitivity;
+                    velocity.y = deltaY * sensitivity;
+                    
+                    previousPosition = { x: e.clientX, y: e.clientY };
+                }
+            });
+
+            document.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const zoomDelta = e.deltaY > 0 ? zoomSensitivity : -zoomSensitivity;
+                camera.fov += zoomDelta;
+                camera.fov = Math.max(minFOV, Math.min(maxFOV, camera.fov));
+                camera.updateProjectionMatrix();
+            }, { passive: false });
+
+            let lastTouchDistance = 0;
+
+            document.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1) {
+                    isDown = true;
+                    velocity = { x: 0, y: 0 };
+                    const touch = e.touches[0];
+                    previousPosition = { x: touch.clientX, y: touch.clientY };
+                    document.body.classList.add('dragging');
+                    lastTouchDistance = 0;
+                } else if (e.touches.length === 2) {
+                    isDown = false;
+                    lastTouchDistance = getTouchDistance(e.touches[0], e.touches[1]);
+                }
+            });
+
+            document.addEventListener('touchend', (e) => {
+                isDown = false;
+                document.body.classList.remove('dragging');
+                lastTouchDistance = 0;
+            });
+
+            document.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 1 && isDown) {
+                    const touch = e.touches[0];
+                    const deltaX = touch.clientX - previousPosition.x;
+                    const deltaY = touch.clientY - previousPosition.y;
+                    
+                    camera.rotation.order = 'YXZ';
+                    camera.rotation.y += deltaX * sensitivity;
+                    camera.rotation.x += deltaY * sensitivity;
+                    
+                    const maxAngle = Math.PI / 2;
+                    camera.rotation.x = Math.max(-maxAngle, Math.min(maxAngle, camera.rotation.x));
+                    
+                    velocity.x = deltaX * sensitivity;
+                    velocity.y = deltaY * sensitivity;
+                    
+                    previousPosition = { x: touch.clientX, y: touch.clientY };
+                    
+                    e.preventDefault();
+                } else if (e.touches.length === 2) {
+                    const currentDistance = getTouchDistance(e.touches[0], e.touches[1]);
+                    
+                    if (lastTouchDistance > 0) {
+                        const deltaPinch = currentDistance - lastTouchDistance;
+                        const zoomDelta = deltaPinch > 0 ? -zoomSensitivity : zoomSensitivity;
+                        
+                        camera.fov += zoomDelta;
+                        camera.fov = Math.max(minFOV, Math.min(maxFOV, camera.fov));
+                        camera.updateProjectionMatrix();
+                    }
+                    
+                    lastTouchDistance = currentDistance;
+                    e.preventDefault();
+                }
+            }, { passive: false });
+
+            function getTouchDistance(touch1, touch2) {
+                const dx = touch1.clientX - touch2.clientX;
+                const dy = touch1.clientY - touch2.clientY;
+                return Math.sqrt(dx * dx + dy * dy);
+            }
+
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                if (!isDown && (Math.abs(velocity.x) > 0.0001 || Math.abs(velocity.y) > 0.0001)) {
+                    camera.rotation.order = 'YXZ';
+                    camera.rotation.y += velocity.x;
+                    camera.rotation.x += velocity.y;
+                    
+                    const maxAngle = Math.PI / 2;
+                    camera.rotation.x = Math.max(-maxAngle, Math.min(maxAngle, camera.rotation.x));
+                    
+                    velocity.x *= friction;
+                    velocity.y *= friction;
+                }
+                
+                renderer.render(scene, camera);
+            }
+            animate();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+
+        function checkTHREE() {
+            if (typeof THREE !== 'undefined') {
+                startPanorama();
+            } else {
+                setTimeout(checkTHREE, 100);
+            }
+        }
+        
+        checkTHREE();
+    </script>
+</body>
+</html>
