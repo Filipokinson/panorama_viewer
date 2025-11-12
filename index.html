@@ -25,119 +25,145 @@
             cursor: grabbing;
         }
 
-        #sidebar {
+        #menu-view {
             position: fixed;
-            left: 0;
             top: 0;
-            width: 300px;
-            height: 100vh;
-            background: rgba(30, 30, 30, 0.95);
-            backdrop-filter: blur(10px);
-            z-index: 1000;
-            transform: translateX(-100%);
-            transition: transform 0.3s ease;
-            overflow-y: auto;
-            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: auto;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
         }
 
-        #sidebar.open {
-            transform: translateX(0);
+
+        #menu-view.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
         }
 
-        #sidebar-content {
+
+        .menu-header {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            color: #e0e0e0;
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+
+
+        .menu-back-btn {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            background: rgba(80, 80, 80, 0.8);
+            color: #e0e0e0;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.5em;
+            transition: all 0.3s ease;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            z-index: 2001;
+        }
+
+
+        .menu-back-btn:hover {
+            background: rgba(120, 120, 120, 1);
+            color: #ffffff;
+            transform: scale(1.1);
+        }
+
+
+        .menu-back-btn.show {
+            display: flex;
+        }
+
+
+        .floor-plan-container {
+            position: relative;
+            max-width: 900px;
+            width: 90%;
             padding: 20px;
         }
 
-        .sidebar-header {
-            color: #e0e0e0;
-            font-size: 1.5em;
-            margin-bottom: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
 
-        .close-btn {
-            background: none;
-            border: none;
-            color: #e0e0e0;
-            font-size: 1.5em;
-            cursor: pointer;
-            padding: 0;
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: color 0.3s ease;
-        }
-
-        .close-btn:hover {
-            color: #ffffff;
-        }
-
-        .panorama-list {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .panorama-item {
-            background: rgba(60, 60, 60, 0.3);
-            border: 2px solid rgba(100, 100, 100, 0.5);
-            border-radius: 8px;
-            padding: 0;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            gap: 0;
-        }
-
-        .panorama-item:hover {
-            background: rgba(80, 80, 80, 0.4);
-            border-color: rgba(150, 150, 150, 0.8);
-            transform: translateX(5px);
-            box-shadow: 0 5px 20px rgba(100, 100, 100, 0.2);
-        }
-
-        .panorama-item.active {
-            background: rgba(120, 120, 120, 0.6);
-            border-color: rgba(180, 180, 180, 1);
-            box-shadow: 0 0 20px rgba(150, 150, 150, 0.3);
-        }
-
-        .panorama-thumbnail {
+        #floor-plan {
             width: 100%;
-            height: 150px;
-            object-fit: cover;
+            height: auto;
             display: block;
-            background: #2a2a2a;
-            opacity: 0.85;
+            background: #f5f5f5;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
         }
 
-        .panorama-item:hover .panorama-thumbnail {
+
+        .room-hotspot {
+            position: absolute;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+            border-radius: 4px;
+        }
+
+
+        .room-hotspot:hover {
+            background: rgba(100, 150, 255, 0.1);
+            border-color: rgba(100, 150, 255, 0.5);
+            box-shadow: 0 0 15px rgba(100, 150, 255, 0.3);
+        }
+
+
+        .room-label {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: #e0e0e0;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            transform: translate(-50%, -110%);
+        }
+
+
+        .room-hotspot:hover .room-label {
             opacity: 1;
         }
 
-        .panorama-info {
-            padding: 15px;
-            background: rgba(0, 0, 0, 0.4);
+
+        /* ПАНОРАМНЫЙ ПРОСМОТРЩИК */
+        #panorama-view {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 1000;
+            display: none;
         }
 
-        .panorama-title {
-            font-weight: bold;
-            font-size: 1.1em;
-            color: #e0e0e0;
-            margin-bottom: 5px;
+
+        #panorama-view.active {
+            display: block;
         }
 
-        .panorama-desc {
-            font-size: 0.85em;
-            opacity: 0.7;
-            color: #b0b0b0;
-        }
 
         #menu-button {
             position: fixed;
@@ -159,11 +185,18 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
         }
 
+
         #menu-button:hover {
             background: rgba(120, 120, 120, 1);
             color: #ffffff;
             transform: scale(1.1);
         }
+
+
+        #menu-button.hidden {
+            display: none;
+        }
+
 
         #info-panel {
             position: fixed;
@@ -178,6 +211,7 @@
             box-shadow: 0 4px 15px transparent;
         }
 
+
         #info-image {
             width: 100%;
             height: 200px;
@@ -186,77 +220,170 @@
             background: transparent;
         }
 
-        #info-text {
-            padding: 15px;
-            color: #d0d0d0;
-            font-size: 0.9em;
-            line-height: 1.4;
-        }
 
-        #info-title {
-            font-weight: bold;
-            font-size: 1.1em;
+        .panorama-title {
+            position: fixed;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
             color: #e0e0e0;
-            margin-bottom: 8px;
+            font-size: 1.3em;
+            font-weight: bold;
+            text-align: center;
+            z-index: 500;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px 20px;
+            border-radius: 4px;
+            max-width: 80%;
         }
 
-        #info-desc {
-            opacity: 0.8;
-            color: #b0b0b0;
-        }
 
         @media (max-width: 768px) {
-            #sidebar {
-                width: 80vw;
-            }
-            
-            .panorama-thumbnail {
-                height: 120px;
+            .menu-header {
+                font-size: 1.4em;
+                top: 20px;
+                left: 20px;
             }
 
-            .panorama-info {
-                padding: 12px;
+
+            .menu-back-btn {
+                top: 20px;
+                right: 20px;
+                width: 45px;
+                height: 45px;
+                font-size: 1.3em;
             }
 
-            .panorama-title {
-                font-size: 1em;
+
+            .floor-plan-container {
+                width: 95%;
+                padding: 15px;
             }
 
-            .panorama-desc {
-                font-size: 0.8em;
-            }
-            
+
             #info-panel {
                 max-width: 250px;
             }
+
 
             #info-image {
                 height: 150px;
             }
 
-            #info-text {
-                padding: 12px;
-                font-size: 0.8em;
+
+            .panorama-title {
+                font-size: 1.1em;
+                top: 20px;
+            }
+        }
+
+
+        @media (max-width: 480px) {
+            .menu-header {
+                font-size: 1.2em;
+            }
+
+
+            .panorama-title {
+                font-size: 0.95em;
+                padding: 8px 15px;
             }
         }
     </style>
 </head>
 <body>
-    <button id="menu-button">☰</button>
-
-    <div id="sidebar">
-        <div id="sidebar-content">
-            <div class="sidebar-header">
-                Панорамы
-                <button class="close-btn" id="close-sidebar">✕</button>
-            </div>
-            <div class="panorama-list" id="panorama-list"></div>
+    <!-- ГЛАВНОЕ МЕНЮ С ПЛАНОМ -->
+    <div id="menu-view">
+        <div class="menu-header">Выберите кабинет</div>
+        <button class="menu-back-btn" id="menu-back-btn">✕</button>
+        <div class="floor-plan-container">
+            <svg id="floor-plan" viewBox="0 0 1000 800" xmlns="http://www.w3.org/2000/svg">
+                <!-- Фон -->
+                <rect width="1000" height="800" fill="#f5f5f5"/>
+                
+                <!-- Стены -->
+                <rect x="50" y="50" width="900" height="700" fill="none" stroke="#333" stroke-width="8"/>
+                
+                <!-- Коридор -->
+                <rect x="450" y="50" width="100" height="700" fill="#e8e8e8" stroke="#999" stroke-width="2"/>
+                
+                <!-- Левая сторона -->
+                <!-- Один пояс, один путь (1-II) -->
+                <g class="room-hotspot" data-id="one_way" data-x="225" data-y="150">
+                    <rect x="70" y="70" width="180" height="150" fill="rgba(100,150,255,0.05)" stroke="#4169E1" stroke-width="2" rx="4"/>
+                    <text x="160" y="160" text-anchor="middle" font-size="14" fill="#333" pointer-events="none">1-II</text>
+                    <div class="room-label">Один пояс, один путь</div>
+                </g>
+                
+                <!-- Конфуция (1-III) -->
+                <g class="room-hotspot" data-id="confucius" data-x="225" data-y="350">
+                    <rect x="70" y="270" width="180" height="150" fill="rgba(100,150,255,0.05)" stroke="#4169E1" stroke-width="2" rx="4"/>
+                    <text x="160" y="360" text-anchor="middle" font-size="14" fill="#333" pointer-events="none">1-III</text>
+                    <div class="room-label">Конфуция</div>
+                </g>
+                
+                <!-- БРИКС (2-II) -->
+                <g class="room-hotspot" data-id="brics" data-x="225" data-y="550">
+                    <rect x="70" y="470" width="180" height="150" fill="rgba(100,150,255,0.05)" stroke="#4169E1" stroke-width="2" rx="4"/>
+                    <text x="160" y="560" text-anchor="middle" font-size="14" fill="#333" pointer-events="none">2-II</text>
+                    <div class="room-label">БРИКС</div>
+                </g>
+                
+                <!-- Правая сторона -->
+                <!-- Грибоедова (2-V) -->
+                <g class="room-hotspot" data-id="griboedov" data-x="775" data-y="150">
+                    <rect x="750" y="70" width="180" height="150" fill="rgba(100,150,255,0.05)" stroke="#4169E1" stroke-width="2" rx="4"/>
+                    <text x="840" y="160" text-anchor="middle" font-size="14" fill="#333" pointer-events="none">2-V</text>
+                    <div class="room-label">Грибоедова</div>
+                </g>
+                
+                <!-- Индиры Ганди (2-XI) -->
+                <g class="room-hotspot" data-id="gandhi" data-x="775" data-y="280">
+                    <rect x="750" y="220" width="180" height="120" fill="rgba(100,150,255,0.05)" stroke="#4169E1" stroke-width="2" rx="4"/>
+                    <text x="840" y="280" text-anchor="middle" font-size="14" fill="#333" pointer-events="none">2-XI</text>
+                    <div class="room-label">И. Ганди</div>
+                </g>
+                
+                <!-- Нгуги Ва Тхионго (2-XII) -->
+                <g class="room-hotspot" data-id="thiongo" data-x="775" data-y="400">
+                    <rect x="750" y="350" width="180" height="100" fill="rgba(100,150,255,0.05)" stroke="#4169E1" stroke-width="2" rx="4"/>
+                    <text x="840" y="405" text-anchor="middle" font-size="14" fill="#333" pointer-events="none">2-XII</text>
+                    <div class="room-label">Нгуги Ва Тхионго</div>
+                </g>
+                
+                <!-- Ибн Баттута (2-XIII) -->
+                <g class="room-hotspot" data-id="battuta" data-x="775" data-y="510">
+                    <rect x="750" y="460" width="180" height="100" fill="rgba(100,150,255,0.05)" stroke="#4169E1" stroke-width="2" rx="4"/>
+                    <text x="840" y="515" text-anchor="middle" font-size="14" fill="#333" pointer-events="none">2-XIII</text>
+                    <div class="room-label">Ибн Баттута</div>
+                </g>
+                
+                <!-- Лопе де Вега (2-XV) -->
+                <g class="room-hotspot" data-id="vega" data-x="775" data-y="650">
+                    <rect x="750" y="580" width="180" height="140" fill="rgba(100,150,255,0.05)" stroke="#4169E1" stroke-width="2" rx="4"/>
+                    <text x="840" y="660" text-anchor="middle" font-size="14" fill="#333" pointer-events="none">2-XV</text>
+                    <div class="room-label">Лопе де Вега</div>
+                </g>
+                
+                <!-- Библиотека (3) -->
+                <g class="room-hotspot" data-id="library" data-x="500" data-y="700">
+                    <rect x="400" y="750" width="200" height="90" fill="rgba(255,165,0,0.05)" stroke="#FF8C00" stroke-width="2" rx="4"/>
+                    <text x="500" y="800" text-anchor="middle" font-size="14" fill="#333" pointer-events="none">Библиотека</text>
+                    <div class="room-label">Библиотека</div>
+                </g>
+            </svg>
         </div>
     </div>
 
-    <div id="info-panel">
-        <img id="info-image" src="" alt="Информация">
+
+    <div id="panorama-view">
+        <button id="menu-button">☰</button>
+        <div class="panorama-title" id="panorama-title"></div>
+        <div id="info-panel">
+            <img id="info-image" src="" alt="Информация">
+        </div>
     </div>
+
 
     <script async src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     
@@ -267,7 +394,6 @@
                 name: 'Учебный кабинет Один пояс, один путь',
                 desc: '1-II',
                 image: './images/one_way.jpg',
-                thumbnail: './images/one_way_thumb.jpg',
                 infoImage: './images/one_way_info.png'
             },
             {
@@ -275,7 +401,6 @@
                 name: 'Учебный кабинет имени Конфуция',
                 desc: '1-III',
                 image: './images/confucius.jpg',
-                thumbnail: './images/confucius_thumb.jpg',
                 infoImage: './images/confucius_info.png',
             },
             {
@@ -283,7 +408,6 @@
                 name: 'Учебный кабинет БРИКС',
                 desc: '2-II',
                 image: './images/brics.jpg',
-                thumbnail: './images/brics_thumb.jpg',
                 infoImage: './images/brics_info.png',
             },
             {
@@ -291,7 +415,6 @@
                 name: 'Учебный кабинет имени Грибоедова',
                 desc: '2-V',
                 image: './images/griboedov.jpg',
-                thumbnail: './images/griboedov_thumb.jpg',
                 infoImage: './images/griboedov_info.png',
             },
             {
@@ -299,7 +422,6 @@
                 name: 'Учебный кабинет имени Индиры Ганди',
                 desc: '2-XI',
                 image: './images/gandhi.jpg',
-                thumbnail: './images/gandhi_thumb.jpg',
                 infoImage: './images/gandhi_info.png',
             },
             {
@@ -307,7 +429,6 @@
                 name: 'Учебный кабинет имени Нгуги Ва Тхионго',
                 desc: '2-XII',
                 image: './images/thiongo.jpg',
-                thumbnail: './images/thiongo_thumb.jpg',
                 infoImage: './images/thiongo_info.png',
             },
             {
@@ -315,7 +436,6 @@
                 name: 'Учебный кабинет имени Ибн Баттута',
                 desc: '2-XIII',
                 image: './images/battuta.jpg',
-                thumbnail: './images/battuta_thumb.jpg',
                 infoImage: './images/battuta_info.png',
             },
             {
@@ -323,7 +443,6 @@
                 name: 'Учебный кабинет имени Лопе де Вега',
                 desc: '2-XV',
                 image: './images/vega.jpg',
-                thumbnail: './images/vega_thumb.jpg',
                 infoImage: './images/vega_info.png',
             },
             {
@@ -331,78 +450,92 @@
                 name: 'Библиотека',
                 desc: '3',
                 image: './images/library.jpg',
-                thumbnail: './images/library_thumb.jpg',
                 infoImage: './images/library_info.png',
             }
         ];
 
-        let currentPanoramaId = 'one_way';
-        let renderer, scene, camera, mesh;
 
-        const sidebar = document.getElementById('sidebar');
+        let currentPanoramaId = null;
+        let renderer, scene, camera, mesh;
+        let panoramaViewActive = false;
+
+
+        const menuView = document.getElementById('menu-view');
+        const panoramaView = document.getElementById('panorama-view');
         const menuButton = document.getElementById('menu-button');
-        const closeBtn = document.getElementById('close-sidebar');
-        const panoramaList = document.getElementById('panorama-list');
+        const menuBackBtn = document.getElementById('menu-back-btn');
+        const panoramaTitle = document.getElementById('panorama-title');
         const infoPanel = document.getElementById('info-panel');
         const infoImage = document.getElementById('info-image');
+        const floorPlan = document.getElementById('floor-plan');
 
+
+        // Обработчики кликов на комнаты в плане здания
+        document.querySelectorAll('.room-hotspot').forEach(hotspot => {
+            hotspot.addEventListener('click', () => {
+                const panoramaId = hotspot.getAttribute('data-id');
+                openPanorama(panoramaId);
+            });
+        });
+
+
+        // Кнопка меню (назад в меню) 
         menuButton.addEventListener('click', () => {
-            sidebar.classList.toggle('open');
+            closePanorama();
         });
 
-        closeBtn.addEventListener('click', () => {
-            sidebar.classList.remove('open');
-        });
 
-        document.addEventListener('click', (e) => {
-            if (!sidebar.contains(e.target) && !menuButton.contains(e.target)) {
-                sidebar.classList.remove('open');
+        // Кнопка закрытия в меню
+        menuBackBtn.addEventListener('click', () => {
+            if (panoramaViewActive) {
+                closePanorama();
             }
         });
 
-        panoramas.forEach((pano, index) => {
-            const item = document.createElement('button');
-            item.className = 'panorama-item';
-            if (pano.id === currentPanoramaId) {
-                item.classList.add('active');
-            }
-            item.innerHTML = `
-                <img src="${pano.thumbnail}" alt="${pano.name}" class="panorama-thumbnail">
-                <div class="panorama-info">
-                    <div class="panorama-title">${pano.name}</div>
-                    <div class="panorama-desc">${pano.desc}</div>
-                </div>
-            `;
-            item.addEventListener('click', () => {
-                changePanorama(pano.id);
-                sidebar.classList.remove('open');
-            });
-            panoramaList.appendChild(item);
-        });
 
-        function changePanorama(id) {
-            currentPanoramaId = id;
+        function openPanorama(panoramaId) {
+            currentPanoramaId = panoramaId;
             
-            document.querySelectorAll('.panorama-item').forEach((item, index) => {
-                item.classList.toggle('active', panoramas[index].id === id);
-            });
-
-            const pano = panoramas.find(p => p.id === id);
+            // Переключаемся на вид панорамы
+            menuView.classList.add('hidden');
+            panoramaView.classList.add('active');
+            menuBackBtn.classList.add('show');
+            panoramaViewActive = true;
+            
+            const pano = panoramas.find(p => p.id === panoramaId);
             if (pano) {
-                loadPanorama(pano.image);
-                updateInfoPanel(pano);
+                panoramaTitle.textContent = pano.name;
+                
+                if (!renderer) {
+                    initThreeJS();
+                } else {
+                    loadPanorama(pano.image);
+                    updateInfoPanel(pano);
+                }
             }
         }
+
+
+        function closePanorama() {
+            // Переключаемся обратно на меню
+            panoramaView.classList.remove('active');
+            menuView.classList.remove('hidden');
+            menuBackBtn.classList.remove('show');
+            panoramaViewActive = false;
+            currentPanoramaId = null;
+        }
+
 
         function updateInfoPanel(pano) {
             infoImage.src = pano.infoImage;
         }
 
+
         function initThreeJS() {
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera(
                 75,
-                window.innerWidth / window.innerHeight,
+                panoramaView.clientWidth / panoramaView.clientHeight,
                 0.1,
                 10000
             );
@@ -413,15 +546,17 @@
                 precision: 'highp'
             });
             
-            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setSize(panoramaView.clientWidth, panoramaView.clientHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
-            document.body.appendChild(renderer.domElement);
+            panoramaView.appendChild(renderer.domElement);
+
 
             const firstPano = panoramas.find(p => p.id === currentPanoramaId);
             if (firstPano) {
                 loadPanorama(firstPano.image);
                 updateInfoPanel(firstPano);
             }
+
 
             let isDown = false;
             let previousPosition = { x: 0, y: 0 };
@@ -432,8 +567,9 @@
             const maxFOV = 100;
             const zoomSensitivity = 3;
 
+
             document.addEventListener('mousedown', (e) => {
-                if (e.button === 0 && !sidebar.classList.contains('open')) {
+                if (e.button === 0 && panoramaViewActive) {
                     isDown = true;
                     velocity = { x: 0, y: 0 };
                     previousPosition = { x: e.clientX, y: e.clientY };
@@ -441,13 +577,15 @@
                 }
             });
 
+
             document.addEventListener('mouseup', (e) => {
                 isDown = false;
                 document.body.classList.remove('dragging');
             });
 
+
             document.addEventListener('mousemove', (e) => {
-                if (isDown) {
+                if (isDown && panoramaViewActive) {
                     const deltaX = e.clientX - previousPosition.x;
                     const deltaY = e.clientY - previousPosition.y;
                     
@@ -465,18 +603,23 @@
                 }
             });
 
+
             document.addEventListener('wheel', (e) => {
-                e.preventDefault();
-                const zoomDelta = e.deltaY > 0 ? zoomSensitivity : -zoomSensitivity;
-                camera.fov += zoomDelta;
-                camera.fov = Math.max(minFOV, Math.min(maxFOV, camera.fov));
-                camera.updateProjectionMatrix();
+                if (panoramaViewActive) {
+                    e.preventDefault();
+                    const zoomDelta = e.deltaY > 0 ? zoomSensitivity : -zoomSensitivity;
+                    camera.fov += zoomDelta;
+                    camera.fov = Math.max(minFOV, Math.min(maxFOV, camera.fov));
+                    camera.updateProjectionMatrix();
+                }
             }, { passive: false });
+
 
             let lastTouchDistance = 0;
 
+
             document.addEventListener('touchstart', (e) => {
-                if (e.touches.length === 1 && !sidebar.classList.contains('open')) {
+                if (e.touches.length === 1 && panoramaViewActive) {
                     isDown = true;
                     velocity = { x: 0, y: 0 };
                     const touch = e.touches[0];
@@ -489,14 +632,16 @@
                 }
             });
 
+
             document.addEventListener('touchend', (e) => {
                 isDown = false;
                 document.body.classList.remove('dragging');
                 lastTouchDistance = 0;
             });
 
+
             document.addEventListener('touchmove', (e) => {
-                if (e.touches.length === 1 && isDown) {
+                if (e.touches.length === 1 && isDown && panoramaViewActive) {
                     const touch = e.touches[0];
                     const deltaX = touch.clientX - previousPosition.x;
                     const deltaY = touch.clientY - previousPosition.y;
@@ -514,7 +659,7 @@
                     previousPosition = { x: touch.clientX, y: touch.clientY };
                     
                     e.preventDefault();
-                } else if (e.touches.length === 2) {
+                } else if (e.touches.length === 2 && panoramaViewActive) {
                     const currentDistance = getTouchDistance(e.touches[0], e.touches[1]);
                     
                     if (lastTouchDistance > 0) {
@@ -531,11 +676,13 @@
                 }
             }, { passive: false });
 
+
             function getTouchDistance(touch1, touch2) {
                 const dx = touch1.clientX - touch2.clientX;
                 const dy = touch1.clientY - touch2.clientY;
                 return Math.sqrt(dx * dx + dy * dy);
             }
+
 
             function animate() {
                 requestAnimationFrame(animate);
@@ -556,17 +703,22 @@
             }
             animate();
 
+
             window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
+                if (panoramaViewActive) {
+                    camera.aspect = panoramaView.clientWidth / panoramaView.clientHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(panoramaView.clientWidth, panoramaView.clientHeight);
+                }
             });
         }
+
 
         function loadPanorama(imageUrl) {
             if (mesh) {
                 scene.remove(mesh);
             }
+
 
             const textureLoader = new THREE.TextureLoader();
             
@@ -588,9 +740,9 @@
             });
         }
 
+
         function checkTHREE() {
             if (typeof THREE !== 'undefined') {
-                initThreeJS();
             } else {
                 setTimeout(checkTHREE, 100);
             }
