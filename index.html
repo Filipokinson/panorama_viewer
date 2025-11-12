@@ -165,27 +165,44 @@
             transform: scale(1.1);
         }
 
-        #menu-button.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        #info {
+        #info-panel {
             position: fixed;
             bottom: 20px;
             right: 20px;
-            background: rgba(0, 0, 0, 0.7);
-            color: #d0d0d0;
-            padding: 15px 20px;
-            border-radius: 8px;
-            font-size: 0.85em;
-            z-index: 100;
-            max-width: 250px;
+            background: rgba(0, 0, 0, 0.85);
             border: 1px solid rgba(100, 100, 100, 0.3);
+            border-radius: 8px;
+            z-index: 100;
+            max-width: 300px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
         }
 
-        #info p {
-            margin: 5px 0;
+        #info-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            display: block;
+            background: #2a2a2a;
+        }
+
+        #info-text {
+            padding: 15px;
+            color: #d0d0d0;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+
+        #info-title {
+            font-weight: bold;
+            font-size: 1.1em;
+            color: #e0e0e0;
+            margin-bottom: 8px;
+        }
+
+        #info-desc {
+            opacity: 0.8;
+            color: #b0b0b0;
         }
 
         @media (max-width: 768px) {
@@ -209,11 +226,17 @@
                 font-size: 0.8em;
             }
             
-            #info {
-                font-size: 0.75em;
-                padding: 10px 15px;
-                bottom: 10px;
-                right: 10px;
+            #info-panel {
+                max-width: 250px;
+            }
+
+            #info-image {
+                height: 150px;
+            }
+
+            #info-text {
+                padding: 12px;
+                font-size: 0.8em;
             }
         }
     </style>
@@ -231,9 +254,8 @@
         </div>
     </div>
 
-    <div id="info">
-        <p>ПК: Левая кнопка - вращение, колесо - зум</p>
-        <p>Телефон: Палец - вращение, два пальца - зум</p>
+    <div id="info-panel">
+        <img id="info-image" src="" alt="Информация">
     </div>
 
     <script async src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -241,28 +263,88 @@
     <script>
         const panoramas = [
             {
-                id: 'pup',
-                name: 'Ибн-Баттута',
-                desc: 'Ибн-Баттута',
-                image: './images/pup.jpg',
-                thumbnail: './images/pup.jpg'
+                id: 'one_way',
+                name: 'Учебный кабинет Один пояс, один путь',
+                desc: '1-II',
+                image: './images/one_way.jpg',
+                thumbnail: './images/one_way_thumb.jpg',
+                infoImage: './images/one_way_info.jpg'
             },
             {
-                id: 'nature',
-                name: 'Улица',
-                desc: 'Улица',
-                image: './images/street.jpg',
-                thumbnail: './images/street.jpg'
+                id: 'confucius',
+                name: 'Учебный кабинет имени Конфуция',
+                desc: '1-III',
+                image: './images/confucius.jpg',
+                thumbnail: './images/confucius_thumb.jpg',
+                infoImage: './images/confucius_info.jpg',
+            },
+            {
+                id: 'brics',
+                name: 'Учебный кабинет БРИКС',
+                desc: '2-II',
+                image: './images/brics.jpg',
+                thumbnail: './images/brics_thumb.jpg',
+                infoImage: './images/brics_info.jpg',
+            },
+            {
+                id: 'griboedov',
+                name: 'Учебный кабинет имени Грибоедова',
+                desc: '2-V',
+                image: './images/griboedov.jpg',
+                thumbnail: './images/griboedov_thumb.jpg',
+                infoImage: './images/griboedov_info.jpg',
+            },
+            {
+                id: 'gandhi',
+                name: 'Учебный кабинет имени Индиры Ганди',
+                desc: '2-XI',
+                image: './images/gandhi.jpg',
+                thumbnail: './images/gandhi_thumb.jpg',
+                infoImage: './images/gandhi_info.jpg',
+            },
+            {
+                id: 'thiongo',
+                name: 'Учебный кабинет имени Нгуги Ва Тхионго',
+                desc: '2-XII',
+                image: './images/thiongo.jpg',
+                thumbnail: './images/thiongo_thumb.jpg',
+                infoImage: './images/thiongo_info.jpg',
+            },
+            {
+                id: 'battuta',
+                name: 'Учебный кабинет имени Ибн Баттута',
+                desc: '2-XIII',
+                image: './images/battuta.jpg',
+                thumbnail: './images/battuta_thumb.jpg',
+                infoImage: './images/battuta_info.jpg',
+            },
+            {
+                id: 'vega',
+                name: 'Учебный кабинет имени Лопе де Вега',
+                desc: '2-XV',
+                image: './images/vega.jpg',
+                thumbnail: './images/vega_thumb.jpg',
+                infoImage: './images/vega_info.jpg',
+            },
+            {
+                id: 'library',
+                name: 'Библиотека',
+                desc: '3',
+                image: './images/library.jpg',
+                thumbnail: './images/library_thumb.jpg',
+                infoImage: './images/library_info.jpg',
             }
         ];
 
-        let currentPanoramaId = 'pup';
+        let currentPanoramaId = 'one_way';
         let renderer, scene, camera, mesh;
 
         const sidebar = document.getElementById('sidebar');
         const menuButton = document.getElementById('menu-button');
         const closeBtn = document.getElementById('close-sidebar');
         const panoramaList = document.getElementById('panorama-list');
+        const infoPanel = document.getElementById('info-panel');
+        const infoImage = document.getElementById('info-image');
 
         menuButton.addEventListener('click', () => {
             sidebar.classList.toggle('open');
@@ -308,7 +390,12 @@
             const pano = panoramas.find(p => p.id === id);
             if (pano) {
                 loadPanorama(pano.image);
+                updateInfoPanel(pano);
             }
+        }
+
+        function updateInfoPanel(pano) {
+            infoImage.src = pano.infoImage;
         }
 
         function initThreeJS() {
@@ -333,13 +420,14 @@
             const firstPano = panoramas.find(p => p.id === currentPanoramaId);
             if (firstPano) {
                 loadPanorama(firstPano.image);
+                updateInfoPanel(firstPano);
             }
 
             let isDown = false;
             let previousPosition = { x: 0, y: 0 };
             let velocity = { x: 0, y: 0 };
             const friction = 0.95;
-            const sensitivity = 0.002;
+            const sensitivity = 0.01;
             const minFOV = 20;
             const maxFOV = 100;
             const zoomSensitivity = 3;
