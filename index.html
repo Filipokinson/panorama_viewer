@@ -432,7 +432,12 @@
 
 
         function updateInfoPanel(pano) {
-            infoImage.src = pano.infoImage;
+            if (pano.infoImage) {
+                infoImage.src = pano.infoImage;
+                infoPanel.style.display = 'block';
+            } else {
+                infoPanel.style.display = 'none';
+            }
         }
 
 
