@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Галерея панорам</title>
     <style>
         * {
@@ -20,11 +20,30 @@
             cursor: grab;
             touch-action: none;
             font-family: Arial, sans-serif;
+            -webkit-user-select: none;
+            user-select: none;
         }
         body.dragging {
             cursor: grabbing;
         }
 
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        button:focus-visible,
+        .panorama-item:focus-visible {
+            outline: 2px solid #ffffff;
+            outline-offset: 3px;
+        }
 
         #sidebar {
             position: fixed;
@@ -41,16 +60,13 @@
             box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
         }
 
-
         #sidebar.open {
             transform: translateX(0);
         }
 
-
         #sidebar-content {
             padding: 20px;
         }
-
 
         .sidebar-header {
             color: #e0e0e0;
@@ -60,7 +76,6 @@
             align-items: center;
             justify-content: space-between;
         }
-
 
         .close-btn {
             background: none;
@@ -77,18 +92,15 @@
             transition: color 0.3s ease;
         }
 
-
         .close-btn:hover {
             color: #ffffff;
         }
-
 
         .panorama-list {
             display: flex;
             flex-direction: column;
             gap: 15px;
         }
-
 
         .panorama-item {
             background: rgba(60, 60, 60, 0.3);
@@ -101,8 +113,10 @@
             display: flex;
             flex-direction: column;
             gap: 0;
+            width: 100%;
+            text-align: left;
+            font: inherit;
         }
-
 
         .panorama-item:hover {
             background: rgba(80, 80, 80, 0.4);
@@ -111,13 +125,11 @@
             box-shadow: 0 5px 20px rgba(100, 100, 100, 0.2);
         }
 
-
         .panorama-item.active {
             background: rgba(120, 120, 120, 0.6);
             border-color: rgba(180, 180, 180, 1);
             box-shadow: 0 0 20px rgba(150, 150, 150, 0.3);
         }
-
 
         .panorama-thumbnail {
             width: 100%;
@@ -128,17 +140,14 @@
             opacity: 0.85;
         }
 
-
         .panorama-item:hover .panorama-thumbnail {
             opacity: 1;
         }
-
 
         .panorama-info {
             padding: 15px;
             background: rgba(0, 0, 0, 0.4);
         }
-
 
         .panorama-title {
             font-weight: bold;
@@ -147,18 +156,20 @@
             margin-bottom: 5px;
         }
 
-
         .panorama-desc {
             font-size: 0.85em;
             opacity: 0.7;
             color: #b0b0b0;
         }
 
-
         #menu-button {
             position: fixed;
             top: 20px;
             left: 20px;
+            z-index: 999;
+        }
+
+        .circle-btn {
             background: rgba(80, 80, 80, 0.8);
             color: #e0e0e0;
             border: none;
@@ -166,8 +177,7 @@
             height: 50px;
             border-radius: 50%;
             cursor: pointer;
-            font-size: 1.5em;
-            z-index: 999;
+            font-size: 1.4em;
             transition: all 0.3s ease;
             display: flex;
             align-items: center;
@@ -175,13 +185,61 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
         }
 
-
-        #menu-button:hover {
+        .circle-btn:hover {
             background: rgba(120, 120, 120, 1);
             color: #ffffff;
             transform: scale(1.1);
         }
 
+        #bottom-controls {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 900;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        #top-badge {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translate(-50%, -8px);
+            background: rgba(20, 20, 20, 0.75);
+            backdrop-filter: blur(6px);
+            color: #e6e6e6;
+            padding: 10px 20px;
+            border-radius: 999px;
+            font-size: 0.9em;
+            display: flex;
+            gap: 10px;
+            align-items: baseline;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.25s ease, transform 0.25s ease;
+            z-index: 400;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            max-width: min(70vw, 480px);
+        }
+
+        #top-badge.visible {
+            opacity: 1;
+            transform: translate(-50%, 0);
+        }
+
+        #top-badge-name {
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        #top-badge-room {
+            opacity: 0.6;
+            font-size: 0.85em;
+            white-space: nowrap;
+        }
 
         #info-panel {
             position: fixed;
@@ -194,8 +252,8 @@
             max-width: 300px;
             overflow: hidden;
             box-shadow: 0 4px 15px transparent;
+            display: none;
         }
-
 
         #info-image {
             width: 100%;
@@ -205,90 +263,159 @@
             background: transparent;
         }
 
-
-        #info-text {
-            padding: 15px;
-            color: #d0d0d0;
-            font-size: 0.9em;
-            line-height: 1.4;
-        }
-
-
-        #info-title {
-            font-weight: bold;
-            font-size: 1.1em;
+        #loading-overlay,
+        #error-overlay {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 16px;
+            background: rgba(0, 0, 0, 0.55);
+            z-index: 500;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
             color: #e0e0e0;
-            margin-bottom: 8px;
+            font-size: 0.95em;
+            text-align: center;
+            padding: 20px;
         }
 
+        #loading-overlay.visible,
+        #error-overlay.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
 
-        #info-desc {
-            opacity: 0.8;
-            color: #b0b0b0;
+        .spinner {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 3px solid rgba(255, 255, 255, 0.15);
+            border-top-color: rgba(220, 220, 220, 0.9);
+            animation: spin 0.9s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        #error-overlay button {
+            background: rgba(90, 90, 90, 0.9);
+            color: #f0f0f0;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95em;
+            transition: background 0.2s ease;
+        }
+
+        #error-overlay button:hover {
+            background: rgba(130, 130, 130, 1);
         }
 
         @media (max-width: 768px) {
             #sidebar {
                 width: 80vw;
             }
-            
+
             .panorama-thumbnail {
                 height: 120px;
             }
-
 
             .panorama-info {
                 padding: 12px;
             }
 
-
             .panorama-title {
                 font-size: 1em;
             }
 
-
             .panorama-desc {
                 font-size: 0.8em;
             }
-            
+
             #info-panel {
                 max-width: 250px;
             }
-
 
             #info-image {
                 height: 150px;
             }
 
-
-            #info-text {
-                padding: 12px;
+            #top-badge {
                 font-size: 0.8em;
+                padding: 8px 14px;
+            }
+
+            #bottom-controls {
+                bottom: 16px;
+                left: 16px;
+            }
+
+            .circle-btn {
+                width: 44px;
+                height: 44px;
+                font-size: 1.2em;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            #sidebar,
+            .panorama-item,
+            .circle-btn,
+            #top-badge,
+            #loading-overlay,
+            #error-overlay {
+                transition-duration: 0.01ms !important;
             }
         }
     </style>
 </head>
 <body>
-    <button id="menu-button">☰</button>
+    <button id="menu-button" class="circle-btn" aria-label="Открыть список панорам" aria-expanded="false" aria-controls="sidebar">☰</button>
 
-    <div id="sidebar">
+    <div id="top-badge" aria-hidden="true">
+        <span id="top-badge-name"></span>
+        <span id="top-badge-room"></span>
+    </div>
+
+    <div id="bottom-controls">
+        <button id="reset-view-btn" class="circle-btn" aria-label="Сбросить вид" title="Сбросить вид (двойной клик по панораме)">⟲</button>
+        <button id="fullscreen-btn" class="circle-btn" aria-label="Полноэкранный режим" title="Полноэкранный режим">⛶</button>
+    </div>
+
+    <div id="sidebar" aria-hidden="true">
         <div id="sidebar-content">
             <div class="sidebar-header">
                 Панорамы
-                <button class="close-btn" id="close-sidebar">✕</button>
+                <button class="close-btn" id="close-sidebar" aria-label="Закрыть меню">✕</button>
             </div>
             <div class="panorama-list" id="panorama-list"></div>
         </div>
     </div>
 
-
     <div id="info-panel">
         <img id="info-image" src="" alt="">
     </div>
 
+    <div id="loading-overlay">
+        <div class="spinner" role="presentation"></div>
+        <span>Загрузка панорамы…</span>
+    </div>
+
+    <div id="error-overlay">
+        <span>Не удалось загрузить панораму.</span>
+        <button id="error-retry">Повторить попытку</button>
+    </div>
+
+    <div id="sr-status" class="sr-only" role="status" aria-live="polite"></div>
 
     <script async src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    
+
     <script>
         const panoramas = [
             {
@@ -364,83 +491,141 @@
             }
         ];
 
-
-        let currentPanoramaId = 'one_way';
+        let currentPanoramaId = panoramas[0].id;
+        let currentPano = null;
         let renderer, scene, camera, mesh;
+        let rafId = null;
+        let loadToken = 0;
 
-
+        // --- DOM references ---
         const sidebar = document.getElementById('sidebar');
         const menuButton = document.getElementById('menu-button');
         const closeBtn = document.getElementById('close-sidebar');
         const panoramaList = document.getElementById('panorama-list');
         const infoPanel = document.getElementById('info-panel');
         const infoImage = document.getElementById('info-image');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const errorOverlay = document.getElementById('error-overlay');
+        const errorRetryBtn = document.getElementById('error-retry');
+        const topBadge = document.getElementById('top-badge');
+        const topBadgeName = document.getElementById('top-badge-name');
+        const topBadgeRoom = document.getElementById('top-badge-room');
+        const resetViewBtn = document.getElementById('reset-view-btn');
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+        const srStatus = document.getElementById('sr-status');
 
+        // --- Sidebar open/close ---
+        function openSidebar() {
+            sidebar.classList.add('open');
+            sidebar.setAttribute('aria-hidden', 'false');
+            menuButton.setAttribute('aria-expanded', 'true');
+            const activeItem = panoramaList.querySelector('.panorama-item.active');
+            if (activeItem) activeItem.scrollIntoView({ block: 'nearest' });
+        }
+
+        function closeSidebar() {
+            sidebar.classList.remove('open');
+            sidebar.setAttribute('aria-hidden', 'true');
+            menuButton.setAttribute('aria-expanded', 'false');
+        }
 
         menuButton.addEventListener('click', () => {
-            sidebar.classList.toggle('open');
+            if (sidebar.classList.contains('open')) closeSidebar();
+            else openSidebar();
         });
 
-
-        closeBtn.addEventListener('click', () => {
-            sidebar.classList.remove('open');
-        });
-
+        closeBtn.addEventListener('click', closeSidebar);
 
         document.addEventListener('click', (e) => {
-            if (!sidebar.contains(e.target) && !menuButton.contains(e.target)) {
-                sidebar.classList.remove('open');
+            if (sidebar.classList.contains('open') && !sidebar.contains(e.target) && !menuButton.contains(e.target)) {
+                closeSidebar();
             }
         });
 
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && sidebar.classList.contains('open')) {
+                closeSidebar();
+            }
+        });
 
-        panoramas.forEach((pano, index) => {
+        // --- Build sidebar list ---
+        panoramas.forEach((pano) => {
             const item = document.createElement('button');
             item.className = 'panorama-item';
+            item.type = 'button';
+            item.dataset.id = pano.id;
             if (pano.id === currentPanoramaId) {
                 item.classList.add('active');
+                item.setAttribute('aria-current', 'true');
             }
             item.innerHTML = `
-                <img src="${pano.thumbnail}" alt="${pano.name}" class="panorama-thumbnail">
+                <img src="${pano.thumbnail}" alt="" loading="lazy" class="panorama-thumbnail">
                 <div class="panorama-info">
                     <div class="panorama-title">${pano.name}</div>
-                    <div class="panorama-desc">${pano.desc}</div>
+                    <div class="panorama-desc">Кабинет ${pano.desc}</div>
                 </div>
             `;
             item.addEventListener('click', () => {
-                changePanorama(pano.id);
-                sidebar.classList.remove('open');
+                goToPanorama(pano.id);
+                closeSidebar();
             });
             panoramaList.appendChild(item);
         });
 
+        function goToPanorama(id) {
+            const pano = panoramas.find(p => p.id === id);
+            if (!pano) return;
 
-        function changePanorama(id) {
             currentPanoramaId = id;
-            
-            document.querySelectorAll('.panorama-item').forEach((item, index) => {
-                item.classList.toggle('active', panoramas[index].id === id);
+            currentPano = pano;
+
+            document.querySelectorAll('.panorama-item').forEach((item) => {
+                const isActive = item.dataset.id === id;
+                item.classList.toggle('active', isActive);
+                if (isActive) item.setAttribute('aria-current', 'true');
+                else item.removeAttribute('aria-current');
             });
 
-
-            const pano = panoramas.find(p => p.id === id);
-            if (pano) {
-                loadPanorama(pano.image);
-                updateInfoPanel(pano);
-            }
+            document.title = `${pano.name} — Галерея панорам`;
+            updateInfoPanel(pano);
+            updateTopBadge(pano);
+            loadPanorama(pano.image);
         }
-
 
         function updateInfoPanel(pano) {
             if (pano.infoImage) {
                 infoImage.src = pano.infoImage;
+                infoImage.alt = `Информация: ${pano.name}`;
                 infoPanel.style.display = 'block';
             } else {
+                infoImage.src = '';
                 infoPanel.style.display = 'none';
             }
         }
 
+        function updateTopBadge(pano) {
+            topBadge.classList.remove('visible');
+            window.setTimeout(() => {
+                topBadgeName.textContent = pano.name;
+                topBadgeRoom.textContent = pano.desc ? `каб. ${pano.desc}` : '';
+                topBadge.classList.add('visible');
+            }, 150);
+        }
 
+        // --- Loading / error UI ---
+        function showLoading(show) {
+            loadingOverlay.classList.toggle('visible', show);
+        }
+
+        function showError(show) {
+            errorOverlay.classList.toggle('visible', show);
+        }
+
+        errorRetryBtn.addEventListener('click', () => {
+            if (currentPano) loadPanorama(currentPano.image);
+        });
+
+        // --- Three.js setup ---
         function initThreeJS() {
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera(
@@ -449,24 +634,31 @@
                 0.1,
                 10000
             );
-            
-            renderer = new THREE.WebGLRenderer({ 
-                antialias: true, 
+            camera.rotation.order = 'YXZ';
+
+            renderer = new THREE.WebGLRenderer({
+                antialias: true,
                 alpha: true,
                 precision: 'highp'
             });
-            
+            renderer.outputEncoding = THREE.sRGBEncoding;
             renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
             document.body.appendChild(renderer.domElement);
 
+            renderer.domElement.addEventListener('webglcontextlost', (e) => {
+                e.preventDefault();
+                if (rafId) cancelAnimationFrame(rafId);
+                showError(true);
+            }, false);
 
-            const firstPano = panoramas.find(p => p.id === currentPanoramaId);
-            if (firstPano) {
-                loadPanorama(firstPano.image);
-                updateInfoPanel(firstPano);
-            }
+            renderer.domElement.addEventListener('webglcontextrestored', () => {
+                showError(false);
+                if (currentPano) loadPanorama(currentPano.image);
+                animate();
+            }, false);
 
+            goToPanorama(currentPanoramaId);
 
             let isDown = false;
             let previousPosition = { x: 0, y: 0 };
@@ -476,6 +668,7 @@
             const minFOV = 20;
             const maxFOV = 100;
             const zoomSensitivity = 3;
+            const defaultFOV = 75;
 
             // Автопрокрутка
             let autoScrollTimeout;
@@ -486,7 +679,6 @@
             function startAutoScrollTimer() {
                 clearTimeout(autoScrollTimeout);
                 isAutoScrolling = false;
-                
                 autoScrollTimeout = setTimeout(() => {
                     isAutoScrolling = true;
                 }, autoScrollDelay);
@@ -496,9 +688,45 @@
                 startAutoScrollTimer();
             }
 
+            function isInteractiveTarget(target) {
+                return target.closest('#sidebar, #menu-button, #bottom-controls, #info-panel, #top-badge, #error-overlay');
+            }
 
+            // Плавный сброс угла обзора и зума
+            function resetView() {
+                const twoPi = Math.PI * 2;
+                const startX = camera.rotation.x;
+                const startY = camera.rotation.y;
+                const targetY = Math.round(startY / twoPi) * twoPi;
+                const startFov = camera.fov;
+                const duration = 450;
+                const startTime = performance.now();
+                velocity = { x: 0, y: 0 };
+
+                function step(now) {
+                    const t = Math.min((now - startTime) / duration, 1);
+                    const ease = 1 - Math.pow(1 - t, 3);
+                    camera.rotation.x = startX * (1 - ease);
+                    camera.rotation.y = startY + (targetY - startY) * ease;
+                    camera.fov = startFov + (defaultFOV - startFov) * ease;
+                    camera.updateProjectionMatrix();
+                    if (t < 1) {
+                        requestAnimationFrame(step);
+                    } else {
+                        resetAutoScroll();
+                    }
+                }
+                requestAnimationFrame(step);
+            }
+            resetViewBtn.addEventListener('click', resetView);
+
+            document.addEventListener('dblclick', (e) => {
+                if (!isInteractiveTarget(e.target)) resetView();
+            });
+
+            // --- Мышь ---
             document.addEventListener('mousedown', (e) => {
-                if (e.button === 0 && !sidebar.classList.contains('open')) {
+                if (e.button === 0 && !sidebar.classList.contains('open') && !isInteractiveTarget(e.target)) {
                     isDown = true;
                     velocity = { x: 0, y: 0 };
                     previousPosition = { x: e.clientX, y: e.clientY };
@@ -507,33 +735,34 @@
                 }
             });
 
-
-            document.addEventListener('mouseup', (e) => {
+            document.addEventListener('mouseup', () => {
                 isDown = false;
                 document.body.classList.remove('dragging');
             });
 
+            document.addEventListener('mouseleave', () => {
+                isDown = false;
+                document.body.classList.remove('dragging');
+            });
 
             document.addEventListener('mousemove', (e) => {
                 if (isDown) {
                     const deltaX = e.clientX - previousPosition.x;
                     const deltaY = e.clientY - previousPosition.y;
-                    
-                    camera.rotation.order = 'YXZ';
+
                     camera.rotation.y += deltaX * sensitivity;
                     camera.rotation.x += deltaY * sensitivity;
-                    
+
                     const maxAngle = Math.PI / 2;
                     camera.rotation.x = Math.max(-maxAngle, Math.min(maxAngle, camera.rotation.x));
-                    
+
                     velocity.x = deltaX * sensitivity;
                     velocity.y = deltaY * sensitivity;
-                    
+
                     previousPosition = { x: e.clientX, y: e.clientY };
                     resetAutoScroll();
                 }
             });
-
 
             document.addEventListener('wheel', (e) => {
                 e.preventDefault();
@@ -544,12 +773,24 @@
                 resetAutoScroll();
             }, { passive: false });
 
-
+            // --- Сенсорное управление ---
             let lastTouchDistance = 0;
-
+            let lastTapTime = 0;
 
             document.addEventListener('touchstart', (e) => {
+                if (isInteractiveTarget(e.target)) return;
+
                 if (e.touches.length === 1 && !sidebar.classList.contains('open')) {
+                    const now = Date.now();
+                    if (now - lastTapTime < 300) {
+                        // двойное касание — сброс вида
+                        lastTapTime = 0;
+                        isDown = false;
+                        resetView();
+                        return;
+                    }
+                    lastTapTime = now;
+
                     isDown = true;
                     velocity = { x: 0, y: 0 };
                     const touch = e.touches[0];
@@ -564,52 +805,44 @@
                 }
             });
 
-
-            document.addEventListener('touchend', (e) => {
+            document.addEventListener('touchend', () => {
                 isDown = false;
                 document.body.classList.remove('dragging');
                 lastTouchDistance = 0;
             });
-
 
             document.addEventListener('touchmove', (e) => {
                 if (e.touches.length === 1 && isDown) {
                     const touch = e.touches[0];
                     const deltaX = touch.clientX - previousPosition.x;
                     const deltaY = touch.clientY - previousPosition.y;
-                    
-                    camera.rotation.order = 'YXZ';
+
                     camera.rotation.y += deltaX * sensitivity;
                     camera.rotation.x += deltaY * sensitivity;
-                    
+
                     const maxAngle = Math.PI / 2;
                     camera.rotation.x = Math.max(-maxAngle, Math.min(maxAngle, camera.rotation.x));
-                    
+
                     velocity.x = deltaX * sensitivity;
                     velocity.y = deltaY * sensitivity;
-                    
+
                     previousPosition = { x: touch.clientX, y: touch.clientY };
-                    
                     e.preventDefault();
                     resetAutoScroll();
                 } else if (e.touches.length === 2) {
+                    e.preventDefault();
                     const currentDistance = getTouchDistance(e.touches[0], e.touches[1]);
-                    
                     if (lastTouchDistance > 0) {
                         const deltaPinch = currentDistance - lastTouchDistance;
                         const zoomDelta = deltaPinch > 0 ? -zoomSensitivity : zoomSensitivity;
-                        
                         camera.fov += zoomDelta;
                         camera.fov = Math.max(minFOV, Math.min(maxFOV, camera.fov));
                         camera.updateProjectionMatrix();
                     }
-                    
                     lastTouchDistance = currentDistance;
-                    e.preventDefault();
                     resetAutoScroll();
                 }
             }, { passive: false });
-
 
             function getTouchDistance(touch1, touch2) {
                 const dx = touch1.clientX - touch2.clientX;
@@ -617,69 +850,158 @@
                 return Math.sqrt(dx * dx + dy * dy);
             }
 
+            // --- Клавиатура ---
+            const rotateStep = 0.05;
+            document.addEventListener('keydown', (e) => {
+                if (sidebar.classList.contains('open')) return;
+                let handled = true;
+                switch (e.key) {
+                    case 'ArrowLeft':
+                        camera.rotation.y -= rotateStep;
+                        break;
+                    case 'ArrowRight':
+                        camera.rotation.y += rotateStep;
+                        break;
+                    case 'ArrowUp':
+                        camera.rotation.x = Math.max(-Math.PI / 2, camera.rotation.x - rotateStep);
+                        break;
+                    case 'ArrowDown':
+                        camera.rotation.x = Math.min(Math.PI / 2, camera.rotation.x + rotateStep);
+                        break;
+                    case '+':
+                    case '=':
+                        camera.fov = Math.max(minFOV, camera.fov - zoomSensitivity);
+                        camera.updateProjectionMatrix();
+                        break;
+                    case '-':
+                    case '_':
+                        camera.fov = Math.min(maxFOV, camera.fov + zoomSensitivity);
+                        camera.updateProjectionMatrix();
+                        break;
+                    default:
+                        handled = false;
+                }
+                if (handled) {
+                    resetAutoScroll();
+                }
+            });
 
+            // --- Полноэкранный режим ---
+            fullscreenBtn.addEventListener('click', () => {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen?.().catch(() => {});
+                } else {
+                    document.exitFullscreen?.();
+                }
+            });
+
+            document.addEventListener('fullscreenchange', () => {
+                const isFs = !!document.fullscreenElement;
+                fullscreenBtn.textContent = isFs ? '⤢' : '⛶';
+                fullscreenBtn.setAttribute('aria-label', isFs ? 'Выйти из полноэкранного режима' : 'Полноэкранный режим');
+            });
+
+            // --- Цикл рендеринга ---
             function animate() {
-                requestAnimationFrame(animate);
-                
-                // Автопрокрутка
+                rafId = requestAnimationFrame(animate);
+
                 if (isAutoScrolling && !isDown) {
-                    camera.rotation.order = 'YXZ';
                     camera.rotation.y += autoScrollSpeed;
                 }
-                
+
                 if (!isDown && (Math.abs(velocity.x) > 0.0001 || Math.abs(velocity.y) > 0.0001)) {
-                    camera.rotation.order = 'YXZ';
                     camera.rotation.y += velocity.x;
                     camera.rotation.x += velocity.y;
-                    
+
                     const maxAngle = Math.PI / 2;
                     camera.rotation.x = Math.max(-maxAngle, Math.min(maxAngle, camera.rotation.x));
-                    
+
                     velocity.x *= friction;
                     velocity.y *= friction;
                 }
-                
+
                 renderer.render(scene, camera);
             }
             animate();
-
-            // Инициализация таймера
             startAutoScrollTimer();
 
+            // Останавливаем рендер во вкладке в фоне, чтобы не тратить ресурсы
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    if (rafId) cancelAnimationFrame(rafId);
+                } else {
+                    animate();
+                }
+            });
+
+            // Debounce на resize
+            let resizeTimeout;
             window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(() => {
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                }, 100);
             });
         }
 
+        function disposeMesh(m) {
+            if (!m) return;
+            if (m.geometry) m.geometry.dispose();
+            if (m.material) {
+                if (m.material.map) m.material.map.dispose();
+                m.material.dispose();
+            }
+        }
 
         function loadPanorama(imageUrl) {
-            if (mesh) {
-                scene.remove(mesh);
-            }
-
+            const token = ++loadToken;
+            showError(false);
+            showLoading(true);
+            srStatus.textContent = 'Загрузка панорамы…';
 
             const textureLoader = new THREE.TextureLoader();
-            
-            textureLoader.load(imageUrl, function(texture) {
-                const geometry = new THREE.SphereGeometry(500, 64, 32);
-                geometry.scale(-1, 1, 1);
-                
-                const material = new THREE.MeshBasicMaterial({ map: texture });
-                mesh = new THREE.Mesh(geometry, material);
-                scene.add(mesh);
-                
-                console.log('Панорама загружена: ' + imageUrl);
-            }, 
-            function(progressEvent) {
-                console.log('Загрузка: ' + (progressEvent.loaded / progressEvent.total * 100) + '%');
-            },
-            function(error) {
-                console.error('Ошибка загрузки:', error);
-            });
-        }
 
+            textureLoader.load(
+                imageUrl,
+                function (texture) {
+                    if (token !== loadToken) {
+                        // Пользователь уже переключился на другую панораму — эта загрузка устарела
+                        texture.dispose();
+                        return;
+                    }
+
+                    texture.encoding = THREE.sRGBEncoding;
+                    texture.minFilter = THREE.LinearFilter;
+
+                    const geometry = new THREE.SphereGeometry(500, 64, 32);
+                    geometry.scale(-1, 1, 1);
+                    const material = new THREE.MeshBasicMaterial({ map: texture });
+                    const newMesh = new THREE.Mesh(geometry, material);
+
+                    // Старая панорама остаётся видимой до полной загрузки новой
+                    const oldMesh = mesh;
+                    scene.add(newMesh);
+                    mesh = newMesh;
+                    if (oldMesh) {
+                        scene.remove(oldMesh);
+                        disposeMesh(oldMesh);
+                    }
+
+                    showLoading(false);
+                    srStatus.textContent = 'Панорама загружена';
+                },
+                undefined,
+                function (error) {
+                    if (token !== loadToken) return;
+                    console.error('Ошибка загрузки панорамы:', imageUrl, error);
+                    showLoading(false);
+                    showError(true);
+                    srStatus.textContent = 'Не удалось загрузить панораму';
+                }
+            );
+        }
 
         function checkTHREE() {
             if (typeof THREE !== 'undefined') {
@@ -688,7 +1010,7 @@
                 setTimeout(checkTHREE, 100);
             }
         }
-        
+
         checkTHREE();
     </script>
 </body>
