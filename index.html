@@ -317,6 +317,118 @@
             background: rgba(130, 130, 130, 1);
         }
 
+        #hotspot-layer {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 300;
+        }
+
+        .hotspot-marker {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 28px;
+            height: 28px;
+            margin-left: -14px;
+            margin-top: -14px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.85);
+            border: 2px solid rgba(255, 255, 255, 0.95);
+            color: #222;
+            font-size: 0.8em;
+            font-weight: bold;
+            font-style: italic;
+            font-family: Georgia, serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            pointer-events: auto;
+            transition: transform 0.15s ease, opacity 0.15s ease, background 0.15s ease;
+            animation: hotspot-pulse 2.4s ease-out infinite;
+        }
+
+        .hotspot-marker.hidden {
+            display: none;
+        }
+
+        .hotspot-marker:hover,
+        .hotspot-marker.active {
+            transform: scale(1.15);
+            background: #ffffff;
+        }
+
+        @keyframes hotspot-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.5); }
+            70% { box-shadow: 0 0 0 14px rgba(255, 255, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+        }
+
+        .hotspot-tooltip {
+            position: absolute;
+            top: 0;
+            left: 0;
+            max-width: 260px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(6px);
+            color: #222222;
+            padding: 12px 14px;
+            border-radius: 8px;
+            font-size: 0.85em;
+            font-weight: normal;
+            line-height: 1.45;
+            pointer-events: none;
+            opacity: 0;
+            transform: translateY(4px);
+            transition: opacity 0.15s ease, transform 0.15s ease;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+            z-index: 301;
+        }
+
+        .hotspot-tooltip.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .hotspot-tooltip-title {
+            font-weight: bold;
+            margin-bottom: 4px;
+            color: #111111;
+        }
+
+        #calibrate-btn {
+            display: none;
+        }
+
+        #calibrate-btn.active {
+            background: rgba(217, 119, 87, 0.9);
+            color: #fff;
+        }
+
+        #calibration-panel {
+            position: fixed;
+            bottom: 90px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 15, 15, 0.92);
+            color: #8cff8c;
+            font-family: Consolas, Menlo, monospace;
+            font-size: 0.8em;
+            padding: 10px 16px;
+            border-radius: 8px;
+            z-index: 950;
+            display: none;
+            text-align: center;
+            white-space: pre-line;
+            max-width: 90vw;
+            pointer-events: none;
+        }
+
+        #calibration-panel.visible {
+            display: block;
+        }
+
         @media (max-width: 768px) {
             #sidebar {
                 width: 80vw;
@@ -386,7 +498,12 @@
     <div id="bottom-controls">
         <button id="reset-view-btn" class="circle-btn" aria-label="Сбросить вид" title="Сбросить вид (двойной клик по панораме)">⟲</button>
         <button id="fullscreen-btn" class="circle-btn" aria-label="Полноэкранный режим" title="Полноэкранный режим">⛶</button>
+        <button id="calibrate-btn" class="circle-btn" aria-label="Режим калибровки меток" title="Режим калибровки меток">🎯</button>
     </div>
+
+    <div id="hotspot-layer"></div>
+
+    <div id="calibration-panel"></div>
 
     <div id="sidebar" aria-hidden="true">
         <div id="sidebar-content">
@@ -417,77 +534,39 @@
     <script async src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <script>
+        // Формат точки на стене (hotspot):
+        //   yaw   — угол по горизонтали в градусах (0 = направление камеры по умолчанию)
+        //   pitch — угол по вертикали в градусах (0 = уровень горизонта, + вверх, - вниз)
+        //   title, text — заголовок и текст сноски
+        // Точные yaw/pitch удобнее всего получить через режим калибровки:
+        // откройте страницу с ?calibrate=1 в адресной строке, нажмите на кнопку 🎯
+        // и кликните прямо на нужный объект в панораме — координаты появятся внизу
+        // экрана и скопируются в буфер обмена.
         const panoramas = [
             {
-                id: 'one_way',
-                name: 'Учебный кабинет Один пояс, один путь',
+                id: 'office',
+                name: 'Офисное помещение',
                 desc: '1-II',
                 image: './images/one_way.jpg',
                 thumbnail: './images/one_way_thumb.jpg',
-                infoImage: './images/one_way_info.png'
+                infoImage: './images/one_way_info.png',
+                hotspots: [
+                    // Пример — координаты условные (центр вида по умолчанию).
+                    // Замените на реальные, полученные в режиме калибровки, или удалите.
+                { yaw: 164.4, 
+                pitch: -2.4, 
+                title: '', 
+                text: 'Карта - центральный образовательный элемент кабинета, посвященного странам АСЕАН, и выполняет наглядную учебную функцию. Учащиеся визуально запоминают состав региона, расположение стран и хронологию расширения организации без обращения к учебнику или презентации. Карта задает визуальную идентичность кабинета, сразу считывается его специализация и профиль обучения.' 
+                }
+                ]
             },
             {
-                id: 'confucius',
-                name: 'Учебный кабинет имени Конфуция',
+                id: 'class',
+                name: 'Учебный кабинет, посвященный АСЕАН',
                 desc: '1-III',
                 image: './images/confucius.jpg',
                 thumbnail: './images/confucius_thumb.jpg',
                 infoImage: './images/confucius_info.png',
-            },
-            {
-                id: 'brics',
-                name: 'Учебный кабинет БРИКС',
-                desc: '2-II',
-                image: './images/brics.jpg',
-                thumbnail: './images/brics_thumb.jpg',
-                infoImage: './images/brics_info.png',
-            },
-            {
-                id: 'griboedov',
-                name: 'Учебный кабинет имени Грибоедова',
-                desc: '2-V',
-                image: './images/griboedov.jpg',
-                thumbnail: './images/griboedov_thumb.jpg',
-                infoImage: './images/griboedov_info.png',
-            },
-            {
-                id: 'gandhi',
-                name: 'Учебный кабинет имени Индиры Ганди',
-                desc: '2-XI',
-                image: './images/gandhi.jpg',
-                thumbnail: './images/gandhi_thumb.jpg',
-                infoImage: './images/gandhi_info.png',
-            },
-            {
-                id: 'thiongo',
-                name: 'Учебный кабинет имени Нгуги Ва Тхионго',
-                desc: '2-XII',
-                image: './images/thiongo.jpg',
-                thumbnail: './images/thiongo_thumb.jpg',
-                infoImage: './images/thiongo_info.png',
-            },
-            {
-                id: 'battuta',
-                name: 'Учебный кабинет имени Ибн Баттута',
-                desc: '2-XIII',
-                image: './images/battuta.jpg',
-                thumbnail: './images/battuta_thumb.jpg',
-                infoImage: './images/battuta_info.png',
-            },
-            {
-                id: 'vega',
-                name: 'Учебный кабинет имени Лопе де Вега',
-                desc: '2-XV',
-                image: './images/vega.jpg',
-                thumbnail: './images/vega_thumb.jpg',
-                infoImage: './images/vega_info.png',
-            },
-            {
-                id: 'library',
-                name: 'Библиотека',
-                desc: '3',
-                image: './images/library.jpg',
-                thumbnail: './images/library_thumb.jpg',
             }
         ];
 
@@ -513,6 +592,9 @@
         const resetViewBtn = document.getElementById('reset-view-btn');
         const fullscreenBtn = document.getElementById('fullscreen-btn');
         const srStatus = document.getElementById('sr-status');
+        const hotspotLayer = document.getElementById('hotspot-layer');
+        const calibrateBtn = document.getElementById('calibrate-btn');
+        const calibrationPanel = document.getElementById('calibration-panel');
 
         // --- Sidebar open/close ---
         function openSidebar() {
@@ -589,8 +671,96 @@
             document.title = `${pano.name} — Галерея панорам`;
             updateInfoPanel(pano);
             updateTopBadge(pano);
+            buildHotspotMarkers(pano);
             loadPanorama(pano.image);
         }
+
+        // --- Точки на стенах (hotspots) ---
+        let hotspotMarkers = [];
+
+        function yawPitchToDirection(yawDeg, pitchDeg) {
+            const yaw = THREE.MathUtils.degToRad(yawDeg);
+            const pitch = THREE.MathUtils.degToRad(pitchDeg);
+            return new THREE.Vector3(
+                -Math.sin(yaw) * Math.cos(pitch),
+                Math.sin(pitch),
+                -Math.cos(yaw) * Math.cos(pitch)
+            );
+        }
+
+        function directionToYawPitch(dir) {
+            const d = dir.clone().normalize();
+            const pitch = Math.asin(Math.max(-1, Math.min(1, d.y)));
+            const yaw = Math.atan2(-d.x, -d.z);
+            return {
+                yaw: THREE.MathUtils.radToDeg(yaw),
+                pitch: THREE.MathUtils.radToDeg(pitch)
+            };
+        }
+
+        function clearHotspotMarkers() {
+            hotspotMarkers.forEach((h) => {
+                h.el.remove();
+                h.tooltipEl.remove();
+            });
+            hotspotMarkers = [];
+        }
+
+        function buildHotspotMarkers(pano) {
+            clearHotspotMarkers();
+            (pano.hotspots || []).forEach((h) => {
+                const marker = document.createElement('button');
+                marker.type = 'button';
+                marker.className = 'hotspot-marker hidden';
+                marker.textContent = 'i';
+                marker.setAttribute('aria-label', h.title || 'Подробнее');
+
+                const tooltip = document.createElement('div');
+                tooltip.className = 'hotspot-tooltip';
+                const titleEl = document.createElement('div');
+                titleEl.className = 'hotspot-tooltip-title';
+                titleEl.textContent = h.title || '';
+                const textEl = document.createElement('div');
+                textEl.textContent = h.text || '';
+                tooltip.appendChild(titleEl);
+                tooltip.appendChild(textEl);
+
+                function show() {
+                    tooltip.classList.add('visible');
+                    marker.classList.add('active');
+                }
+                function hide() {
+                    tooltip.classList.remove('visible');
+                    marker.classList.remove('active');
+                }
+
+                marker.addEventListener('mouseenter', show);
+                marker.addEventListener('mouseleave', hide);
+                marker.addEventListener('focus', show);
+                marker.addEventListener('blur', hide);
+                marker.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    tooltip.classList.contains('visible') ? hide() : show();
+                });
+
+                hotspotLayer.appendChild(marker);
+                hotspotLayer.appendChild(tooltip);
+
+                hotspotMarkers.push({
+                    el: marker,
+                    tooltipEl: tooltip,
+                    dir: yawPitchToDirection(h.yaw, h.pitch)
+                });
+            });
+        }
+
+        // Клик в любом другом месте закрывает открытые сноски
+        document.addEventListener('click', () => {
+            hotspotMarkers.forEach((h) => {
+                h.tooltipEl.classList.remove('visible');
+                h.el.classList.remove('active');
+            });
+        });
 
         function updateInfoPanel(pano) {
             if (pano.infoImage) {
@@ -689,7 +859,7 @@
             }
 
             function isInteractiveTarget(target) {
-                return target.closest('#sidebar, #menu-button, #bottom-controls, #info-panel, #top-badge, #error-overlay');
+                return target.closest('#sidebar, #menu-button, #bottom-controls, #info-panel, #top-badge, #error-overlay, #hotspot-layer, #calibration-panel');
             }
 
             // Плавный сброс угла обзора и зума
@@ -723,6 +893,35 @@
             document.addEventListener('dblclick', (e) => {
                 if (!isInteractiveTarget(e.target)) resetView();
             });
+
+            // --- Режим калибровки меток (только по ?calibrate=1 в адресной строке) ---
+            const calibrationAvailable = new URLSearchParams(window.location.search).has('calibrate');
+            let calibrationMode = false;
+            const raycaster = new THREE.Raycaster();
+            const mouseVec = new THREE.Vector2();
+
+            if (calibrationAvailable) {
+                calibrateBtn.style.display = 'flex';
+                calibrateBtn.addEventListener('click', () => {
+                    calibrationMode = !calibrationMode;
+                    calibrateBtn.classList.toggle('active', calibrationMode);
+                    calibrationPanel.classList.toggle('visible', calibrationMode);
+                    calibrationPanel.textContent = calibrationMode
+                        ? 'Режим калибровки включён.\nКликните точно (без перетаскивания) по нужной точке на панораме.'
+                        : '';
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (!calibrationMode || isInteractiveTarget(e.target)) return;
+                    mouseVec.x = (e.clientX / window.innerWidth) * 2 - 1;
+                    mouseVec.y = -(e.clientY / window.innerHeight) * 2 + 1;
+                    raycaster.setFromCamera(mouseVec, camera);
+                    const { yaw, pitch } = directionToYawPitch(raycaster.ray.direction);
+                    const snippet = `{ yaw: ${yaw.toFixed(1)}, pitch: ${pitch.toFixed(1)}, title: '', text: '' }`;
+                    calibrationPanel.textContent = `yaw: ${yaw.toFixed(1)}°  pitch: ${pitch.toFixed(1)}°\n${snippet}`;
+                    navigator.clipboard?.writeText(snippet).catch(() => {});
+                });
+            }
 
             // --- Мышь ---
             document.addEventListener('mousedown', (e) => {
@@ -901,6 +1100,41 @@
                 fullscreenBtn.setAttribute('aria-label', isFs ? 'Выйти из полноэкранного режима' : 'Полноэкранный режим');
             });
 
+            // Проецирует метки на экран согласно текущему повороту камеры
+            const cameraForward = new THREE.Vector3();
+            function updateHotspots() {
+                if (!hotspotMarkers.length) return;
+                camera.getWorldDirection(cameraForward);
+
+                hotspotMarkers.forEach((h) => {
+                    const dot = cameraForward.dot(h.dir);
+                    if (dot < 0.15) {
+                        h.el.classList.add('hidden');
+                        h.tooltipEl.classList.remove('visible');
+                        h.el.classList.remove('active');
+                        return;
+                    }
+                    const projected = h.dir.clone().multiplyScalar(480).project(camera);
+                    const x = (projected.x * 0.5 + 0.5) * window.innerWidth;
+                    const y = (-projected.y * 0.5 + 0.5) * window.innerHeight;
+
+                    h.el.classList.remove('hidden');
+                    h.el.style.left = x + 'px';
+                    h.el.style.top = y + 'px';
+
+                    if (h.tooltipEl.classList.contains('visible')) {
+                        const tooltipWidth = 260;
+                        let tx = x + 20;
+                        if (tx + tooltipWidth > window.innerWidth - 10) {
+                            tx = Math.max(10, x - tooltipWidth - 20);
+                        }
+                        const ty = Math.min(Math.max(y - 20, 10), window.innerHeight - 120);
+                        h.tooltipEl.style.left = tx + 'px';
+                        h.tooltipEl.style.top = ty + 'px';
+                    }
+                });
+            }
+
             // --- Цикл рендеринга ---
             function animate() {
                 rafId = requestAnimationFrame(animate);
@@ -921,6 +1155,7 @@
                 }
 
                 renderer.render(scene, camera);
+                updateHotspots();
             }
             animate();
             startAutoScrollTimer();
